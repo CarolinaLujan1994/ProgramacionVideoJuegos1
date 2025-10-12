@@ -22,6 +22,7 @@ export class GameManager {
     const loader = new PIXI.Loader();
     this.colores.forEach(color => {
       loader.add(`${color}Ghost`, `src/assets/ghost/${color}Ghost.png`);
+      loader.add(`${color}Potion`, `src/assets/potion/${color}Potion.png`);
     });
 
     loader
@@ -61,6 +62,16 @@ export class GameManager {
         };
       });
 
+      // trexturas de pociones
+      this.potionTextures = {};
+      this.colores.forEach(color => {
+        const recurso = resources[`${color}Potion`];
+        if (recurso?.texture) {
+          this.potionTextures[color] = recurso.texture;
+        }
+      });
+
+      // texturas del mago
       const columnasPorEstado = {
         idle: 6,
         run: 8,
@@ -71,7 +82,7 @@ export class GameManager {
 
       const cortarSprites = (baseTexture, columnas, filas, direcciones) => {
         const frameWidth = 64;   // medidas de cada frame
-        const frameHeight = 64;  
+        const frameHeight = 64;
         const resultado = {};
 
         direcciones.forEach((dir, fila) => {
@@ -87,6 +98,7 @@ export class GameManager {
 
         return resultado;
       };
+
 
       const wizardTextures = {
         idle: cortarSprites(resources.idleWizard.texture.baseTexture, columnasPorEstado.idle, filas, direcciones),
@@ -105,7 +117,7 @@ export class GameManager {
     this.chargeBar.updatePosition(this.app.renderer.width - 60, 20);
     this.pocionHUD = new PocionHUD(this.app);
     this.app.stage.addChild(this.chargeBar.container);
-    this.pociones = this.colores.map(c => new Potion(this.app, c));
+    this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
     this.pocionActiva = null;
     this.proyectiles = [];
     this.heartPickups = [];

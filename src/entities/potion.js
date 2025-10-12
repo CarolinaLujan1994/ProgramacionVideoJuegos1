@@ -1,20 +1,18 @@
 export class Potion {
-  constructor(app, color) {
+  constructor(app, color, texture) {
     this.app = app;
     this.color = color;
     this.visible = true;
 
-    this.sprite = new PIXI.Graphics();
-    this.sprite.beginFill(PIXI.utils.string2hex(color));
-    this.sprite.drawCircle(0, 0, 8);
-    this.sprite.endFill();
+    this.sprite = new PIXI.Sprite(texture); 
+    this.sprite.anchor.set(0.5);
+    this.sprite.scale.set(0.3);
 
     this.sprite.x = Math.random() * 900 + 50;
     this.sprite.y = Math.random() * 700 + 50;
 
     this.app.stage.addChild(this.sprite);
   }
-
   collidesWith(wizard) {
     const dx = wizard.x - this.sprite.x;
     const dy = wizard.y - this.sprite.y;
