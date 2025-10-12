@@ -24,35 +24,25 @@ export class GameManager {
       loader.add(`${color}Ghost`, `src/assets/ghost/${color}Ghost.png`);
     });
 
+    loader
+      .add('idleWizard', 'src/assets/wizard/idleWizard.png')
+      .add('runWizard', 'src/assets/wizard/runWizard.png')
+      .add('thrustWizard', 'src/assets/wizard/thrustWizard.png');
+
     loader.load((loader, resources) => {
       this.colores.forEach(color => {
         const recurso = resources[`${color}Ghost`];
-        if (!recurso || !recurso.texture) {
-          console.warn(`No se pudo cargar el spritesheet para ${color}`);
-          return;
-        }
+        if (!recurso || !recurso.texture) return;
 
         const baseTexture = recurso.texture.baseTexture;
         const columnas = 4;
         const filas = 3;
-
-        if (baseTexture.width % columnas !== 0 || baseTexture.height % filas !== 0) {
-          console.warn(`Spritesheet ${color}Ghost tiene dimensiones incompatibles: ${baseTexture.width}x${baseTexture.height}`);
-          return;
-        }
-
         const frameWidth = baseTexture.width / columnas;
         const frameHeight = baseTexture.height / filas;
 
         const getFrame = (fila, columna) => {
           const x = columna * frameWidth;
           const y = fila * frameHeight;
-
-          if (x + frameWidth > baseTexture.width || y + frameHeight > baseTexture.height) {
-            console.warn(`Frame fuera de límites: fila ${fila}, columna ${columna}`);
-            return null;
-          }
-
           const rect = new PIXI.Rectangle(x, y, frameWidth, frameHeight);
           return new PIXI.Texture(baseTexture, rect);
         };
@@ -71,12 +61,45 @@ export class GameManager {
         };
       });
 
+      const columnasPorEstado = {
+        idle: 6,
+        run: 8,
+        thrust: 7
+      };
+      const filas = 5;
+      const direcciones = ['back', 'left', 'front', 'right'];
+
+      const cortarSprites = (baseTexture, columnas, filas, direcciones) => {
+        const frameWidth = 64;   // medidas de cada frame
+        const frameHeight = 64;  
+        const resultado = {};
+
+        direcciones.forEach((dir, fila) => {
+          const frames = [];
+          for (let col = 0; col < columnas; col++) {
+            const x = col * frameWidth;
+            const y = fila * frameHeight;
+            const rect = new PIXI.Rectangle(x, y, frameWidth, frameHeight);
+            frames.push(new PIXI.Texture(baseTexture, rect));
+          }
+          resultado[dir] = frames;
+        });
+
+        return resultado;
+      };
+
+      const wizardTextures = {
+        idle: cortarSprites(resources.idleWizard.texture.baseTexture, columnasPorEstado.idle, filas, direcciones),
+        run: cortarSprites(resources.runWizard.texture.baseTexture, columnasPorEstado.run, filas, direcciones),
+        thrust: cortarSprites(resources.thrustWizard.texture.baseTexture, columnasPorEstado.thrust, filas, direcciones)
+      };
+
+      this.wizard = new Wizard(this.app, wizardTextures);
       this.iniciarJuego();
     });
   }
 
   iniciarJuego() {
-    this.wizard = new Wizard(this.app);
     this.heartBar = new HeartBar(this.app, 3);
     this.chargeBar = new ChargeBar(this.app);
     this.chargeBar.updatePosition(this.app.renderer.width - 60, 20);
@@ -91,44 +114,19 @@ export class GameManager {
     for (let i = 0; i < 10; i++) {
       const color = this.colores[Math.floor(Math.random() * this.colores.length)];
       const textura = this.ghostTextures[color];
+      const valido = textura?.alive?.down?.[0]?._uvs;
 
-      const esTexturaValida = (t) =>
-        Array.isArray(t) &&
-        t[0] instanceof PIXI.Texture &&
-        t[0]?._uvs !== undefined;
-
-      const valid =
-        esTexturaValida(textura?.alive?.down) &&
-        esTexturaValida(textura?.mid?.down) &&
-        esTexturaValida(textura?.low?.down);
-
-      if (!valid) {
-        console.warn(`Textura inválida para fantasma ${color}:`, {
-          aliveDown: textura?.alive?.down?.[0],
-          midDown: textura?.mid?.down?.[0],
-          lowDown: textura?.low?.down?.[0]
-        });
-        continue;
-      }
+      if (!valido) continue;
 
       let fantasma;
       try {
         fantasma = new Ghost(this.app, color, textura);
       } catch (err) {
-        console.error(`Error al instanciar fantasma ${color}:`, err);
         continue;
       }
 
-      if (
-        fantasma &&
-        typeof fantasma.update === 'function' &&
-        typeof fantasma.x === 'number' &&
-        typeof fantasma.y === 'number' &&
-        !fantasma.invalid
-      ) {
+      if (fantasma && typeof fantasma.update === 'function') {
         this.fantasmas.push(fantasma);
-      } else {
-        console.warn(`Fantasma inválido descartado:`, fantasma);
       }
     }
 
@@ -147,8 +145,9 @@ export class GameManager {
       }
 
       if (e.button === 2) {
+        this.wizard.setState('thrust');
+
         const objetivo = this.fantasmas.find(f => {
-          if (!f || typeof f.update !== 'function' || f.invalid) return false;
           const dx = punto.x - f.x;
           const dy = punto.y - f.y;
           return f.hp > 0 && Math.sqrt(dx * dx + dy * dy) < 20;
@@ -189,10 +188,12 @@ export class GameManager {
     this.start();
   }
 
+
   start() {
     this.app.ticker.add(() => {
       if (!this.fantasmas || this.fantasmas.length === 0) return;
 
+      // filtrar fantasmas 
       this.fantasmas = this.fantasmas.filter((f, i) => {
         const valido =
           f &&
@@ -207,8 +208,10 @@ export class GameManager {
         return valido;
       });
 
+      // ctualizar mago
       this.wizard.update();
 
+      // colisiones
       for (const f of this.fantasmas) {
         try {
           f.update();
@@ -231,15 +234,13 @@ export class GameManager {
           });
           this.heartPickups.push(pickup);
 
-
-
           this.wizard.invulnerable = true;
           let tiempoParpadeo = 60;
           const parpadeo = () => {
             tiempoParpadeo--;
-            this.wizard.graphic.visible = tiempoParpadeo % 10 < 5;
+            this.wizard.visible = tiempoParpadeo % 10 < 5;
             if (tiempoParpadeo <= 0) {
-              this.wizard.graphic.visible = true;
+              this.wizard.visible = true;
               this.wizard.invulnerable = false;
               this.app.ticker.remove(parpadeo);
             }
@@ -248,11 +249,13 @@ export class GameManager {
         }
       }
 
+      // recoger corazones
       this.heartPickups = this.heartPickups.filter(p => p.update(this.wizard));
+
+      // proyectiles ("magia")
       this.proyectiles = this.proyectiles.filter(p => p.update());
 
-
-
+      // agarra las pociones
       this.pociones.forEach(p => {
         if (p.visible && p.collidesWith(this.wizard)) {
           const pudoAgregar = this.pocionHUD.agregarPocion(p.color);

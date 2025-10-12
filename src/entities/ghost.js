@@ -16,11 +16,11 @@ export class Ghost {
 
     this.textures = textures;
 
-    // ✅ Textura inicial: estado alive, dirección down
+    // texturas
     this.sprite = new PIXI.AnimatedSprite(this.textures.alive.down.slice());
-    this.sprite.animationSpeed = 0.1;
+    this.sprite.animationSpeed = 0.05;
     this.sprite.anchor.set(0.5);
-    this.sprite.scale.set(0.25);
+    this.sprite.scale.set(0.15);
     this.sprite.visible = true;
     this.sprite.play();
 
@@ -38,8 +38,8 @@ export class Ghost {
     });
     this.hpText.anchor.set(0.5);
 
-    this.app.stage.addChild(this.hpBar);
-    this.app.stage.addChild(this.hpText);
+    //this.app.stage.addChild(this.hpBar);
+    //this.app.stage.addChild(this.hpText);
     this.app.stage.addChild(this.sprite);
   }
 
