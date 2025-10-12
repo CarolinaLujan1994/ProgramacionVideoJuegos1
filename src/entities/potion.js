@@ -4,7 +4,7 @@ export class Potion {
     this.color = color;
     this.visible = true;
 
-    this.sprite = new PIXI.Sprite(texture); 
+    this.sprite = new PIXI.Sprite(texture);
     this.sprite.anchor.set(0.5);
     this.sprite.scale.set(0.3);
 
@@ -23,6 +23,7 @@ export class Potion {
   hide() {
     this.visible = false;
 
+    // prueba para ver si funcionaba
     const texto = new PIXI.Text(`+5 ${this.color}`, {
       fontSize: 14,
       fill: this.color,
@@ -31,7 +32,7 @@ export class Potion {
     texto.anchor.set(0.5);
     texto.x = this.sprite.x;
     texto.y = this.sprite.y;
-    this.app.stage.addChild(texto);
+    //this.app.stage.addChild(texto);
 
     let alpha = 1;
     const fadeOut = () => {
@@ -53,6 +54,10 @@ export class Potion {
       }
     };
     this.app.ticker.add(fadePotion);
+
+    this.app.stage.removeChild(this.sprite);
+    this.sprite.alpha = 0;
+
 
     // reaparecen en 15 segundos
     setTimeout(() => {

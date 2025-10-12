@@ -50,24 +50,26 @@ export class Wizard extends PIXI.Container {
 
   updateTextures() {
     const newTextures = this.texturesByStateAndDirection[this.state]?.[this.direction];
+
     if (newTextures && Array.isArray(newTextures) && newTextures.length > 1) {
       this.sprite.textures = newTextures;
 
-      // control del loop por estado
-      if (this.state === 'thrust') {
-        this.sprite.loop = false;
+      if (this.state === 'idle') {
+        this.sprite.loop = true;
+        this.sprite.animationSpeed = 0.1; // animación para estado quieto
         this.sprite.gotoAndPlay(0);
-
-        // volver al estado quieto despues de atacar
+      } else if (this.state === 'run') {
+        this.sprite.loop = true;
+        this.sprite.animationSpeed = 0.15; // animación para caminar
+        this.sprite.gotoAndPlay(0);
+      } else if (this.state === 'thrust') {
+        this.sprite.loop = false;
+        this.sprite.animationSpeed = 0.5; // animacion para atacar
+        this.sprite.gotoAndPlay(0);
         this.sprite.onComplete = () => {
           this.setState('idle');
         };
-      } else {
-        this.sprite.loop = true;
-        this.sprite.gotoAndPlay(0);
       }
-
-      this.sprite.animationSpeed = 0.1;
     } else if (newTextures?.length === 1) {
       this.sprite.textures = newTextures;
       this.sprite.gotoAndStop(0);
@@ -113,6 +115,7 @@ export class Wizard extends PIXI.Container {
     this.aura.y = 0;
   }
 
+  // aura como círculo
   activarAura(color = '#00ffff') {
     this.aura.clear();
     this.aura.beginFill(PIXI.utils.string2hex(color), 0.3);

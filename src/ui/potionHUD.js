@@ -1,15 +1,21 @@
 export class PocionHUD {
-  constructor(app) {
+  constructor(app, potionTextures) {
     this.app = app;
+    this.potionTextures = potionTextures;
     this.pociones = [];
     this.container = new PIXI.Container();
-    this.container.x = this.app.renderer.width - 20 - 5 * 14;
-    this.container.y = 20;
-    this.app.stage.addChild(this.container);
+
+    // configuración visual de las pociones
+    this.TOTAL = 5;
+    this.ESPACIO = 6;
+    this.ANCHO_POCION = 20;
+
+    this.container.x = 0;
+    this.container.y = 18;
   }
 
   agregarPocion(color) {
-    if (this.pociones.length >= 5) return false;
+    if (this.pociones.length >= this.TOTAL) return false;
     this.pociones.push({ color, cargas: 5 });
     this.redibujar();
     return true;
@@ -28,20 +34,25 @@ export class PocionHUD {
 
   getSiguientePocion() {
     if (this.pociones.length === 0) return null;
-    const siguiente = this.pociones.shift();
+    const siguiente = this.pociones[0];
     this.redibujar();
     return siguiente;
   }
 
   redibujar() {
     this.container.removeChildren();
-    this.pociones.forEach((p, i) => {
-      const barra = new PIXI.Graphics();
-      barra.beginFill(PIXI.utils.string2hex(p.color));
-      barra.drawRoundedRect(0, 0, 10, 10, 3);
-      barra.endFill();
-      barra.x = i * 14;
-      this.container.addChild(barra);
-    });
+
+    for (let i = 0; i < this.TOTAL; i++) {
+      const p = this.pociones[i];
+      const textura = p ? this.potionTextures[p.color] : PIXI.Texture.EMPTY;
+
+      const sprite = new PIXI.Sprite(textura);
+      sprite.anchor.set(0.5);
+      sprite.scale.set(0.4);
+      sprite.x = i * (this.ANCHO_POCION + this.ESPACIO) + this.ANCHO_POCION / 2;
+      sprite.y = 10;
+
+      this.container.addChild(sprite);
+    }
   }
 }

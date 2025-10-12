@@ -112,13 +112,30 @@ export class GameManager {
   }
 
   iniciarJuego() {
+    // HUD agrupado: barra de carga + pociones
+    this.hudContainer = new PIXI.Container();
+    this.hudContainer.x = this.app.renderer.width - 140; // ajustá según el ancho total del HUD
+    this.hudContainer.y = 20;
+    this.app.stage.addChild(this.hudContainer);
+
+    // barra de corazones
     this.heartBar = new HeartBar(this.app, 3);
+
+    // barra de carga
     this.chargeBar = new ChargeBar(this.app);
-    this.chargeBar.updatePosition(this.app.renderer.width - 60, 20);
-    this.pocionHUD = new PocionHUD(this.app);
-    this.app.stage.addChild(this.chargeBar.container);
+    this.chargeBar.updatePosition(0, 0); // dentro del hudContainer
+    this.hudContainer.addChild(this.chargeBar.container);
+
+    // HUD de pociones alineado debajo
+    this.pocionHUD = new PocionHUD(this.app, this.potionTextures);
+    this.pocionHUD.container.y = 18; // justo debajo de las barras
+    this.hudContainer.addChild(this.pocionHUD.container);
+
+    // pociones disponibles
     this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
     this.pocionActiva = null;
+
+    // proyectiles y enemigos
     this.proyectiles = [];
     this.heartPickups = [];
     this.fantasmas = [];
@@ -142,6 +159,7 @@ export class GameManager {
       }
     }
 
+    // interacción del jugador
     this.app.stage.interactive = true;
     this.app.view.addEventListener('contextmenu', e => e.preventDefault());
 

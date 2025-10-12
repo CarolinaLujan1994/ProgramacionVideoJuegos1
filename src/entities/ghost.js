@@ -100,20 +100,24 @@ export class Ghost {
     this.hpText.x = this.sprite.x;
     this.hpText.y = this.sprite.y - 30;
 
-    /*     if (this.hp <= 0) {
-          this.sprite.textures = this.textures.low.down.slice();
-          this.sprite.gotoAndStop(0);
-          this.app.stage.removeChild(this.hpBar);
-          this.app.stage.removeChild(this.hpText);
-        } */
 
-    if (this.hp <= 0) {
-      this.sprite.visible = false;
+    // el fantasma se desvanece al morir
+    if (this.hp <= 0 && this.sprite.alpha > 0) {
       this.sprite.stop();
       this.app.stage.removeChild(this.hpBar);
       this.app.stage.removeChild(this.hpText);
-    }
 
+      let alpha = this.sprite.alpha;
+      const fadeOut = () => {
+        alpha -= 0.05;
+        this.sprite.alpha = alpha;
+        if (alpha <= 0) {
+          this.app.stage.removeChild(this.sprite);
+          this.app.ticker.remove(fadeOut);
+        }
+      };
+      this.app.ticker.add(fadeOut);
+    }
   }
 
   collidesWith(wizard) {
