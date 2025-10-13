@@ -128,10 +128,20 @@ export class Wizard extends PIXI.Container {
     this.aura.visible = false;
   }
 
-  recibirDanio() {
+  /*   recibirDanio() {
+      this.sprite.tint = 0xff0000;
+      setTimeout(() => {
+        this.sprite.tint = 0xffffff;
+      }, 200);
+    } */
+
+  recibirDanio(callback) {
     this.sprite.tint = 0xff0000;
     setTimeout(() => {
       this.sprite.tint = 0xffffff;
+      if (typeof callback === 'function') {
+        callback();
+      }
     }, 200);
   }
 

@@ -26,9 +26,16 @@ export class GameManager {
     });
 
     loader
+      //mago
       .add('idleWizard', 'src/assets/wizard/idleWizard.png')
       .add('runWizard', 'src/assets/wizard/runWizard.png')
-      .add('thrustWizard', 'src/assets/wizard/thrustWizard.png');
+      .add('thrustWizard', 'src/assets/wizard/thrustWizard.png')
+      //corazones e el hud
+      .add('redHeart', 'src/assets/hearts/redHeart.png')
+      .add('greyHeart', 'src/assets/hearts/greyHeart.png');
+
+
+
 
     loader.load((loader, resources) => {
       this.colores.forEach(color => {
@@ -71,6 +78,12 @@ export class GameManager {
         }
       });
 
+      // texturas de corazon rojo en el mapa
+      this.heartTextures = {
+        red: resources.redHeart.texture,
+        grey: resources.greyHeart.texture
+      };
+
       // texturas del mago
       const columnasPorEstado = {
         idle: 6,
@@ -112,21 +125,26 @@ export class GameManager {
   }
 
   iniciarJuego() {
-    // HUD agrupado: barra de carga + pociones
+    // texturas de corazones
+    const heartTextures = this.heartTextures;
+
+    //console.log(heartTextures)
+
+    // crear barra de corazones con 3 vidas
+    this.heartBar = new HeartBar(this.app, 3, heartTextures);
+
+    // hud agrupado: barra de carga + pociones
     this.hudContainer = new PIXI.Container();
-    this.hudContainer.x = this.app.renderer.width - 140; // ajustá según el ancho total del HUD
+    this.hudContainer.x = this.app.renderer.width - 140; // se ajusta según el ancho total del HUD
     this.hudContainer.y = 20;
     this.app.stage.addChild(this.hudContainer);
-
-    // barra de corazones
-    this.heartBar = new HeartBar(this.app, 3);
 
     // barra de carga
     this.chargeBar = new ChargeBar(this.app);
     this.chargeBar.updatePosition(0, 0); // dentro del hudContainer
     this.hudContainer.addChild(this.chargeBar.container);
 
-    // HUD de pociones alineado debajo
+    // hud de pociones alineado debajo
     this.pocionHUD = new PocionHUD(this.app, this.potionTextures);
     this.pocionHUD.container.y = 18; // justo debajo de las barras
     this.hudContainer.addChild(this.pocionHUD.container);
@@ -255,14 +273,21 @@ export class GameManager {
         const distancia = Math.sqrt(dx * dx + dy * dy);
 
         if (f.hp > 0 && distancia < 20 && !this.wizard.invulnerable) {
-          this.wizard.recibirDanio();
           this.wizard.rebotarDesde(f);
           this.heartBar.perderCorazon();
 
-          const pickup = new HeartPickup(this.app, () => {
-            this.heartBar.agregarCorazon();
+          this.wizard.recibirDanio(() => {
+              if (this.heartBar.getCantidad() < 3) {
+              const redHeartTexture = this.heartTextures?.red;
+
+              const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
+                this.heartBar.agregarCorazon();
+              });
+
+              this.heartPickups.push(heartPickup);
+            }
           });
-          this.heartPickups.push(pickup);
+
 
           this.wizard.invulnerable = true;
           let tiempoParpadeo = 60;
