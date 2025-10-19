@@ -8,6 +8,7 @@ import { PocionHUD } from './ui/potionHUD.js';
 import { PocionProyectil } from './entities/projectilePotion.js';
 
 export class GameManager {
+
   constructor() {
     this.app = new PIXI.Application({
       width: 1024,
@@ -15,6 +16,17 @@ export class GameManager {
       backgroundColor: 0x333333
     });
     document.body.appendChild(this.app.view);
+
+    // cámara
+    this.camara = new PIXI.Container();
+    this.app.stage.addChild(this.camara);
+
+    // cámara de todo el mundo
+    /*     this.world = new PIXI.Container();
+        this.camara.addChild(this.world); */
+
+
+
 
     this.colores = ['red', 'blue', 'green', 'yellow', 'pink'];
     this.ghostTextures = {};
@@ -26,18 +38,26 @@ export class GameManager {
     });
 
     loader
-      //mago
       .add('idleWizard', 'src/assets/wizard/idleWizard.png')
       .add('runWizard', 'src/assets/wizard/runWizard.png')
       .add('thrustWizard', 'src/assets/wizard/thrustWizard.png')
-      //corazones e el hud
       .add('redHeart', 'src/assets/hearts/redHeart.png')
-      .add('greyHeart', 'src/assets/hearts/greyHeart.png');
-
-
-
+      .add('greyHeart', 'src/assets/hearts/greyHeart.png')
+      .add('fondo', 'src/assets/background/background1.png');
 
     loader.load((loader, resources) => {
+      // fondo como TilingSprite dentro de la cámara
+      const fondoTexture = resources.fondo.texture;
+      this.fondo = new PIXI.TilingSprite(
+        fondoTexture,
+        this.app.renderer.width,
+        this.app.renderer.height
+      );
+      this.fondo.tileScale.set(1);
+      this.fondo.tilePosition.set(0, 0);
+      this.camara.addChildAt(this.fondo, 0);
+
+      // fantasmas
       this.colores.forEach(color => {
         const recurso = resources[`${color}Ghost`];
         if (!recurso || !recurso.texture) return;
@@ -69,7 +89,7 @@ export class GameManager {
         };
       });
 
-      // trexturas de pociones
+      // pociones
       this.potionTextures = {};
       this.colores.forEach(color => {
         const recurso = resources[`${color}Potion`];
@@ -78,13 +98,13 @@ export class GameManager {
         }
       });
 
-      // texturas de corazon rojo en el mapa
+      // corazones
       this.heartTextures = {
         red: resources.redHeart.texture,
         grey: resources.greyHeart.texture
       };
 
-      // texturas del mago
+      // mago
       const columnasPorEstado = {
         idle: 6,
         run: 8,
@@ -94,7 +114,7 @@ export class GameManager {
       const direcciones = ['back', 'left', 'front', 'right'];
 
       const cortarSprites = (baseTexture, columnas, filas, direcciones) => {
-        const frameWidth = 64;   // medidas de cada frame
+        const frameWidth = 64;
         const frameHeight = 64;
         const resultado = {};
 
@@ -112,7 +132,6 @@ export class GameManager {
         return resultado;
       };
 
-
       const wizardTextures = {
         idle: cortarSprites(resources.idleWizard.texture.baseTexture, columnasPorEstado.idle, filas, direcciones),
         run: cortarSprites(resources.runWizard.texture.baseTexture, columnasPorEstado.run, filas, direcciones),
@@ -120,6 +139,31 @@ export class GameManager {
       };
 
       this.wizard = new Wizard(this.app, wizardTextures);
+      this.camara.addChild(this.wizard); // mago dentro de la cámara
+
+      // cámara que sigue al mago
+      this.app.ticker.add(() => {
+        this.camara.pivot.x = this.wizard.x;
+        this.camara.pivot.y = this.wizard.y;
+        this.camara.position.x = this.app.renderer.width / 2;
+        this.camara.position.y = this.app.renderer.height / 2;
+      });
+
+      // zoom con rueda del mouse
+      this.app.view.addEventListener('wheel', (e) => {
+        const zoomFactor = 1.05;
+        const scale = e.deltaY < 0
+          ? this.camara.scale.x * zoomFactor
+          : this.camara.scale.x / zoomFactor;
+
+        const clamped = Math.max(0.5, Math.min(2, scale));
+        this.camara.scale.set(clamped);
+
+        if (this.fondo) {
+          this.fondo.tileScale.set(clamped);
+        }
+      });
+
       this.iniciarJuego();
     });
   }
@@ -150,8 +194,14 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // pociones disponibles
-    this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
-    this.pocionActiva = null;
+        this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
+        this.pocionActiva = null;
+        this.pociones.forEach(p => {
+          if (p.sprite) {
+            this.camara.addChild(p.sprite);
+          }
+        });
+       
 
     // proyectiles y enemigos
     this.proyectiles = [];
@@ -174,6 +224,7 @@ export class GameManager {
 
       if (fantasma && typeof fantasma.update === 'function') {
         this.fantasmas.push(fantasma);
+        this.camara.addChild(fantasma.sprite);
       }
     }
 
@@ -183,10 +234,11 @@ export class GameManager {
 
     this.app.view.addEventListener('pointerdown', e => {
       const rect = this.app.view.getBoundingClientRect();
-      const punto = {
+      /* const punto = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
-      };
+      }; */
+      const punto = this.camara.toLocal(new PIXI.Point(e.clientX - rect.left, e.clientY - rect.top));
 
       if (e.button === 0) {
         this.wizard.setDestino(punto);
@@ -229,12 +281,14 @@ export class GameManager {
             }
           );
           this.proyectiles.push(proyectil);
+          this.camara.addChild(proyectil.container) //cambiar por sprite
         }
       }
     });
 
     this.start();
   }
+
 
 
   start() {
@@ -277,7 +331,7 @@ export class GameManager {
           this.heartBar.perderCorazon();
 
           this.wizard.recibirDanio(() => {
-              if (this.heartBar.getCantidad() < 3) {
+            if (this.heartBar.getCantidad() < 3) {
               const redHeartTexture = this.heartTextures?.red;
 
               const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
@@ -285,6 +339,7 @@ export class GameManager {
               });
 
               this.heartPickups.push(heartPickup);
+
             }
           });
 
@@ -305,7 +360,23 @@ export class GameManager {
       }
 
       // recoger corazones
-      this.heartPickups = this.heartPickups.filter(p => p.update(this.wizard));
+      // primero elimina los corazones recogidos
+      this.heartPickups = this.heartPickups.filter(p => {
+        const activo = p.update(this.wizard);
+        if (!activo && p.sprite?.parent) {
+          p.sprite.parent.removeChild(p.sprite); // elimina visualmente
+        }
+        return activo;
+      });
+
+      // despu[es agrega los nuevos corazones que aún no están en escena
+      this.heartPickups.forEach(p => {
+        if (p.sprite && !this.camara.children.includes(p.sprite)) {
+          this.camara.addChild(p.sprite); // 
+        }
+      });
+
+
 
       // proyectiles ("magia")
       this.proyectiles = this.proyectiles.filter(p => p.update());
