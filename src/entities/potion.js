@@ -65,7 +65,10 @@ export class Potion {
       this.sprite.alpha = 1;
       this.sprite.x = Math.random() * 900 + 50;
       this.sprite.y = Math.random() * 700 + 50;
-      this.app.stage.addChild(this.sprite);
+      if (this.sprite.parent) {
+        this.sprite.parent.addChild(this.sprite); //agrega las pociones que reaparecen a la camara
+      }
+
     }, 15000);
   }
 }

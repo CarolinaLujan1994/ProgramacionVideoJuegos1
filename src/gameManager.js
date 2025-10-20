@@ -21,13 +21,6 @@ export class GameManager {
     this.camara = new PIXI.Container();
     this.app.stage.addChild(this.camara);
 
-    // cámara de todo el mundo
-    /*     this.world = new PIXI.Container();
-        this.camara.addChild(this.world); */
-
-
-
-
     this.colores = ['red', 'blue', 'green', 'yellow', 'pink'];
     this.ghostTextures = {};
 
@@ -194,14 +187,14 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // pociones disponibles
-        this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
-        this.pocionActiva = null;
-        this.pociones.forEach(p => {
-          if (p.sprite) {
-            this.camara.addChild(p.sprite);
-          }
-        });
-       
+    this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
+    this.pocionActiva = null;
+    this.pociones.forEach(p => {
+      if (p.sprite) {
+        this.camara.addChild(p.sprite);
+      }
+    });
+
 
     // proyectiles y enemigos
     this.proyectiles = [];
@@ -281,15 +274,13 @@ export class GameManager {
             }
           );
           this.proyectiles.push(proyectil);
-          this.camara.addChild(proyectil.container) //cambiar por sprite
+          this.camara.addChild(proyectil.container) //cambiar por sprite después
         }
       }
     });
 
     this.start();
   }
-
-
 
   start() {
     this.app.ticker.add(() => {
@@ -372,7 +363,7 @@ export class GameManager {
       // despu[es agrega los nuevos corazones que aún no están en escena
       this.heartPickups.forEach(p => {
         if (p.sprite && !this.camara.children.includes(p.sprite)) {
-          this.camara.addChild(p.sprite); // 
+          this.camara.addChild(p.sprite); //agregar corazones a la camara 
         }
       });
 
