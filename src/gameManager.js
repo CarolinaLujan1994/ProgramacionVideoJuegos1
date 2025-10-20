@@ -6,6 +6,7 @@ import { HeartPickup } from './ui/heartPickup.js';
 import { ChargeBar } from './ui/chargeBar.js';
 import { PocionHUD } from './ui/potionHUD.js';
 import { PocionProyectil } from './entities/projectilePotion.js';
+import { Pumpkin } from './entities/pumpkin.js';
 
 export class GameManager {
 
@@ -36,7 +37,7 @@ export class GameManager {
       .add('thrustWizard', 'src/assets/wizard/thrustWizard.png')
       .add('redHeart', 'src/assets/hearts/redHeart.png')
       .add('greyHeart', 'src/assets/hearts/greyHeart.png')
-      .add('fondo', 'src/assets/background/background1.png');
+      .add('fondo', 'src/assets/background/background1.png')
 
     loader.load((loader, resources) => {
       // fondo como TilingSprite dentro de la cámara
@@ -167,12 +168,12 @@ export class GameManager {
 
     //console.log(heartTextures)
 
-    // crear barra de corazones con 3 vidas
+    // crear barra de corazones con 3 vidas (a revisar)
     this.heartBar = new HeartBar(this.app, 3, heartTextures);
 
     // hud agrupado: barra de carga + pociones
     this.hudContainer = new PIXI.Container();
-    this.hudContainer.x = this.app.renderer.width - 140; // se ajusta según el ancho total del HUD
+    this.hudContainer.x = this.app.renderer.width - 140; // se ajusta según el ancho total del hud
     this.hudContainer.y = 20;
     this.app.stage.addChild(this.hudContainer);
 
@@ -185,6 +186,8 @@ export class GameManager {
     this.pocionHUD = new PocionHUD(this.app, this.potionTextures);
     this.pocionHUD.container.y = 18; // justo debajo de las barras
     this.hudContainer.addChild(this.pocionHUD.container);
+
+    this.pumpkinTexture = PIXI.Texture.from('src/assets/pumpkin/pumpkin.png');
 
     // pociones disponibles
     this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
@@ -219,6 +222,16 @@ export class GameManager {
         this.fantasmas.push(fantasma);
         this.camara.addChild(fantasma.sprite);
       }
+    }
+
+    // crear calabazas
+    this.pumpkins = [];
+
+    for (let i = 0; i < 10; i++) {
+      //const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this.heartTextures.red);
+      const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
+      this.pumpkins.push(pumpkin);
+      this.camara.addChild(pumpkin.sprite);
     }
 
     // interacción del jugador
@@ -304,7 +317,7 @@ export class GameManager {
       // ctualizar mago
       this.wizard.update();
 
-      // colisiones
+      // colisiones con fantasmas
       for (const f of this.fantasmas) {
         try {
           f.update();
@@ -367,7 +380,10 @@ export class GameManager {
         }
       });
 
-
+      // actualizacion del mago al chocar con una calabaza
+      this.pumpkins.forEach(p => {
+        p.update(this.wizard, this.heartBar);
+      });
 
       // proyectiles ("magia")
       this.proyectiles = this.proyectiles.filter(p => p.update());
