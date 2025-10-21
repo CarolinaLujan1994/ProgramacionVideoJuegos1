@@ -228,7 +228,7 @@ export class GameManager {
     //console.log(heartTextures)
 
     // crear barra de corazones con 3 vidas (a revisar)
-    this.heartBar = new HeartBar(this.app, 3, heartTextures);
+    this.heartBar = new HeartBar(this.app, 5, heartTextures);
 
     // hud agrupado: barra de carga + pociones
     this.hudContainer = new PIXI.Container();
@@ -247,17 +247,31 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // contador de fantasmas
-    this.totalFantasmas = 60;
-    this.fantasmasVivos = 60;
+    this.totalFantasmas = 20;
+    this.fantasmasVivos = 20;
 
-    this.contadorFantasmas = new PIXI.Text(`60/60`, {
-      fontSize: 16,
+    this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
+      fontFamily: 'Press Start 2P',
+      fontSize: 30,
       fill: '#ffffff',
-      fontWeight: 'bold'
+      fontWeight: 'normal',
+      stroke: '#000000',
+      strokeThickness: 2
     });
-    this.contadorFantasmas.x = 20;
-    this.contadorFantasmas.y = 20;
+
+    this.contadorFantasmas.anchor.set(0.5);
+    this.contadorFantasmas.x = this.app.renderer.width / 2;
+    this.contadorFantasmas.y = 35;
+
+    this.contadorFantasmas.style.stroke = '#000000';
+    this.contadorFantasmas.style.strokeThickness = 2;
+
     this.app.stage.addChild(this.contadorFantasmas);
+
+
+    /*     this.contadorFantasmas.x = 20;
+        this.contadorFantasmas.y = 20;
+        this.app.stage.addChild(this.contadorFantasmas); */
 
     //---------------
 
@@ -266,14 +280,14 @@ export class GameManager {
     // pociones disponibles al iniciar el juego
     this.pociones = [];
 
-    const cantidadPorColor = 4; 
+    const cantidadPorColor = 4;
 
     this.colores.forEach(color => {
       for (let i = 0; i < cantidadPorColor; i++) {
         const pocion = new Potion(this.app, color, this.potionTextures[color]);
         this.pociones.push(pocion);
         if (pocion.sprite) {
-          this.camara.addChild(pocion.sprite); 
+          this.camara.addChild(pocion.sprite);
         }
       }
     });
@@ -285,7 +299,7 @@ export class GameManager {
     this.heartPickups = [];
     this.fantasmas = [];
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < this.fantasmasVivos; i++) {
       const color = this.colores[Math.floor(Math.random() * this.colores.length)];
       const textura = this.ghostTextures[color];
       const valido = textura?.alive?.down?.[0]?._uvs;
@@ -308,7 +322,7 @@ export class GameManager {
     // crear calabazas
     this.pumpkins = [];
 
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 120; i++) {
       //const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this.heartTextures.red);
       const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
       this.pumpkins.push(pumpkin);
@@ -444,6 +458,10 @@ export class GameManager {
           this.app.ticker.add(parpadeo);
         }
       }
+
+      //contador de fantasmas
+      this.fantasmasVivos = this.fantasmas.filter(f => f.hp > 0).length;
+      this.contadorFantasmas.text = `${this.fantasmasVivos}/${this.totalFantasmas}`;
 
       // recoger corazones
       // primero elimina los corazones recogidos

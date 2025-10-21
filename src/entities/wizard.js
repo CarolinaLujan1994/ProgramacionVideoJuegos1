@@ -149,7 +149,7 @@ export class Wizard extends PIXI.Container {
     const dx = this.x - fantasma.x;
     const dy = this.y - fantasma.y;
     const distancia = Math.sqrt(dx * dx + dy * dy);
-    const fuerza = 10;
+    const fuerza = 15;
 
     if (distancia > 0) {
       this.x += (dx / distancia) * fuerza;

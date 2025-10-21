@@ -114,11 +114,6 @@ export class Ghost {
       this.app.stage.removeChild(this.hpBar);
       this.app.stage.removeChild(this.hpText);
 
-      // actualizar contador global
-      if (typeof this.app.fantasmasVivos === 'number' && this.app.contadorFantasmas) {
-        this.app.fantasmasVivos--;
-        this.app.contadorFantasmas.text = `${this.app.fantasmasVivos}/${this.app.totalFantasmas}`;
-      }
 
       let alpha = this.sprite.alpha;
       const fadeOut = () => {
