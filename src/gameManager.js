@@ -603,7 +603,7 @@ export class GameManager {
     });
     volver.anchor.set(0.5);
     volver.x = this.app.renderer.width / 2;
-    volver.y = this.app.renderer.height * 0.8; 
+    volver.y = this.app.renderer.height * 0.8;
     volver.interactive = true;
     volver.buttonMode = true;
     volver.on('pointerdown', () => this.mostrarPantallaInicio());
@@ -616,15 +616,15 @@ export class GameManager {
 
     const textos = [
       'En un bosque encantado,',
-      /*       'un mago intenta escapar de una prisión arcana.',
-            'Criaturas lo acechan...',
-            'pero hay esperanza en cada poción recolectada.' */
+      'un mago anciano despierta de su gran etargo.',
+      'Criaturas lo acechan...',
+      'pero hay esperanza en cada poción recolectada.'
     ];
 
     let index = 0;
     const textoNarrativo = new PIXI.Text('', {
       fontFamily: 'Press Start 2P',
-      fontSize: 30,
+      fontSize: 35,
       fill: '#000000ff',
       stroke: '#bf36e9ff',
       strokeThickness: 4,
