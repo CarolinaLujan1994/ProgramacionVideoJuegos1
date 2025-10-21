@@ -149,13 +149,11 @@ export class GameManager {
       this.wizard = new Wizard(this.app, wizardTextures);
       this.camara.addChild(this.wizard); // mago dentro de la cámara
 
-      // cámara que sigue al mago
-      /*       this.app.ticker.add(() => {
-              this.camara.pivot.x = this.wizard.x;
-              this.camara.pivot.y = this.wizard.y;
-              this.camara.position.x = this.app.renderer.width / 2;
-              this.camara.position.y = this.app.renderer.height / 2;
-            }); */
+      if (this.wizard) {
+        this.wizard.x = mapaWidth / 2;
+        this.wizard.y = mapaHeight / 2;
+      }
+
 
       if (!this.camara.scaleSet) {
         this.camara.scale.set(1.0);
@@ -164,7 +162,12 @@ export class GameManager {
 
 
       this.app.ticker.add(() => {
-        // zoom mínimo para que el fondo cubra la ventana
+        /*         if (this.fondo && this.wizard) {
+                  this.wizard.x = this.fondo.x + this.fondo.width / 2;
+                  this.wizard.y = this.fondo.y + this.fondo.height / 2;
+                } */
+
+        // zoom mínimo para que el fondo cubra la ventana       
         const minZoomX = this.app.renderer.width / mapaWidth;
         const minZoomY = this.app.renderer.height / mapaHeight;
         const minZoom = Math.max(minZoomX, minZoomY);
@@ -217,7 +220,7 @@ export class GameManager {
         }
       });
 
-      this.iniciarJuego();
+      this.mostrarPantallaInicio();
     });
   }
 
@@ -235,6 +238,9 @@ export class GameManager {
     this.hudContainer.x = this.app.renderer.width - 140; // se ajusta según el ancho total del hud
     this.hudContainer.y = 20;
     this.app.stage.addChild(this.hudContainer);
+    //this.hudContainer.addChild(this.heartBar.container);
+    //this.hudContainer.addChild(this.contadorFantasmas);
+
 
     // barra de carga
     this.chargeBar = new ChargeBar(this.app);
@@ -256,7 +262,7 @@ export class GameManager {
       fill: '#ffffff',
       fontWeight: 'normal',
       stroke: '#000000',
-      strokeThickness: 2
+      strokeThickness: 4
     });
 
     this.contadorFantasmas.anchor.set(0.5);
@@ -267,11 +273,6 @@ export class GameManager {
     this.contadorFantasmas.style.strokeThickness = 2;
 
     this.app.stage.addChild(this.contadorFantasmas);
-
-
-    /*     this.contadorFantasmas.x = 20;
-        this.contadorFantasmas.y = 20;
-        this.app.stage.addChild(this.contadorFantasmas); */
 
     //---------------
 
@@ -291,8 +292,6 @@ export class GameManager {
         }
       }
     });
-
-
 
     // proyectiles y enemigos
     this.proyectiles = [];
@@ -335,10 +334,6 @@ export class GameManager {
 
     this.app.view.addEventListener('pointerdown', e => {
       const rect = this.app.view.getBoundingClientRect();
-      /* const punto = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      }; */
       const punto = this.camara.toLocal(new PIXI.Point(e.clientX - rect.left, e.clientY - rect.top));
 
       if (e.button === 0) {
@@ -392,10 +387,21 @@ export class GameManager {
   }
 
   start() {
-    this.app.ticker.add(() => {
+    this.update = () => {
+      if (this.wizard) {
+        // posición inicial solo si no está en cámara
+        if (!this.camara.children.includes(this.wizard)) {
+          this.wizard.x = this.fondo.x + this.fondo.width / 2;
+          this.wizard.y = this.fondo.y + this.fondo.height / 2;
+          this.camara.addChild(this.wizard);
+        }
+
+        this.wizard.update(); // actualización del mago
+      }
+
       if (!this.fantasmas || this.fantasmas.length === 0) return;
 
-      // filtrar fantasmas 
+      // filtrar fantasmas válidos
       this.fantasmas = this.fantasmas.filter((f, i) => {
         const valido =
           f &&
@@ -410,8 +416,11 @@ export class GameManager {
         return valido;
       });
 
-      // ctualizar mago
-      this.wizard.update();
+      // activar game Over
+      if (this.heartBar.getCantidad() <= 0 && !this.gameOverMostrado) {
+        this.gameOverMostrado = true;
+        this.mostrarGameOver();
+      }
 
       // colisiones con fantasmas
       for (const f of this.fantasmas) {
@@ -433,16 +442,12 @@ export class GameManager {
           this.wizard.recibirDanio(() => {
             if (this.heartBar.getCantidad() < 5) {
               const redHeartTexture = this.heartTextures?.red;
-
               const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
                 this.heartBar.agregarCorazon();
               });
-
               this.heartPickups.push(heartPickup);
-
             }
           });
-
 
           this.wizard.invulnerable = true;
           let tiempoParpadeo = 60;
@@ -459,36 +464,34 @@ export class GameManager {
         }
       }
 
-      //contador de fantasmas
+      // contador de fantasmas
       this.fantasmasVivos = this.fantasmas.filter(f => f.hp > 0).length;
       this.contadorFantasmas.text = `${this.fantasmasVivos}/${this.totalFantasmas}`;
 
       // recoger corazones
-      // primero elimina los corazones recogidos
       this.heartPickups = this.heartPickups.filter(p => {
         const activo = p.update(this.wizard);
         if (!activo && p.sprite?.parent) {
-          p.sprite.parent.removeChild(p.sprite); // elimina visualmente
+          p.sprite.parent.removeChild(p.sprite);
         }
         return activo;
       });
 
-      // despu[es agrega los nuevos corazones que aún no están en escena
       this.heartPickups.forEach(p => {
         if (p.sprite && !this.camara.children.includes(p.sprite)) {
-          this.camara.addChild(p.sprite); //agregar corazones a la camara 
+          this.camara.addChild(p.sprite);
         }
       });
 
-      // actualizacion del mago al chocar con una calabaza
+      // colisiones con calabazas
       this.pumpkins.forEach(p => {
         p.update(this.wizard, this.heartBar);
       });
 
-      // proyectiles ("magia")
+      // proyectiles
       this.proyectiles = this.proyectiles.filter(p => p.update());
 
-      // agarra las pociones
+      // pociones
       this.pociones.forEach(p => {
         if (p.visible && p.collidesWith(this.wizard)) {
           const pudoAgregar = this.pocionHUD.agregarPocion(p.color);
@@ -502,6 +505,286 @@ export class GameManager {
           }
         }
       });
+    };
+
+    this.app.ticker.add(this.update); // loop controlado
+  }
+
+  // inicio del juego
+  mostrarPantallaInicio() {
+    // limpiar todo el stage
+    this.app.stage.removeChildren();
+
+    // resetear estado del juego
+    this.gameOverMostrado = false;
+    this.fantasmasVivos = 0;
+    this.fantasmas = [];
+    this.proyectiles = [];
+    this.heartPickups = [];
+    this.pocionActiva = null;
+
+    // fondo negro
+    const fondoNegro = new PIXI.Graphics();
+    fondoNegro.beginFill(0x000000);
+    fondoNegro.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    fondoNegro.endFill();
+    this.app.stage.addChild(fondoNegro);
+
+    // título del juego
+    const titulo = new PIXI.Text('ARCANE ESCAPE', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 35,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
     });
+    titulo.anchor.set(0.5);
+    titulo.x = this.app.renderer.width / 2;
+    titulo.y = 100;
+    this.app.stage.addChild(titulo);
+
+    // botón COMENZAR
+    const botonComenzar = new PIXI.Text('COMENZAR', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
+    });
+    botonComenzar.anchor.set(0.5);
+    botonComenzar.x = this.app.renderer.width / 2;
+    botonComenzar.y = 200;
+    botonComenzar.interactive = true;
+    botonComenzar.buttonMode = true;
+    botonComenzar.on('pointerdown', () => this.mostrarIntroNarrativa());
+    this.app.stage.addChild(botonComenzar);
+
+    // botón CRÉDITOS
+    const botonCreditos = new PIXI.Text('CRÉDITOS', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
+    });
+    botonCreditos.anchor.set(0.5);
+    botonCreditos.x = this.app.renderer.width / 2;
+    botonCreditos.y = 250;
+    botonCreditos.interactive = true;
+    botonCreditos.buttonMode = true;
+    botonCreditos.on('pointerdown', () => this.mostrarCreditos());
+    this.app.stage.addChild(botonCreditos);
+  }
+
+  mostrarCreditos() {
+    this.app.stage.removeChildren();
+
+    const creditos = new PIXI.Text('Desarrollado por Carolina Luján\nProgramación de Videojuegos I\nUniversidad Nacional de Hurlingham\nSegundo cuatrimestre 2025', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#bf36e9ff',
+      stroke: '#000000',
+      strokeThickness: 2,
+      align: 'center'
+    });
+    creditos.anchor.set(0.5);
+    creditos.x = this.app.renderer.width / 2;
+    creditos.y = this.app.renderer.height / 2;
+    this.app.stage.addChild(creditos);
+
+    const volver = new PIXI.Text('VOLVER', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 20,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
+    });
+    volver.anchor.set(0.5);
+    volver.x = this.app.renderer.width / 2;
+    volver.y = creditos.y + 80;
+    volver.interactive = true;
+    volver.buttonMode = true;
+    volver.on('pointerdown', () => this.mostrarPantallaInicio());
+    this.app.stage.addChild(volver);
+  }
+
+  // mostrar narrativa del juego
+  mostrarIntroNarrativa() {
+    this.app.stage.removeChildren(); // limpiar pantalla
+
+    const textos = [
+      'En un bosque encantado,',
+      /*       'un mago intenta escapar de una prisión arcana.',
+            'Criaturas lo acechan...',
+            'pero hay esperanza en cada poción recolectada.' */
+    ];
+
+    let index = 0;
+    const textoNarrativo = new PIXI.Text('', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 30,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4,
+      wordWrap: true,
+      wordWrapWidth: this.app.renderer.width - 100
+    });
+    textoNarrativo.anchor.set(0.5);
+    textoNarrativo.x = this.app.renderer.width / 2;
+    textoNarrativo.y = this.app.renderer.height / 2;
+    this.app.stage.addChild(textoNarrativo);
+
+    const mostrarSiguiente = () => {
+      if (index >= textos.length) {
+        this.app.stage.removeChildren();
+
+        // 🧩 Reconexión de cámara y fondo
+        if (!this.app.stage.children.includes(this.camara)) {
+          this.app.stage.addChild(this.camara);
+        }
+
+        if (!this.camara.children.includes(this.fondo)) {
+          this.camara.addChildAt(this.fondo, 0);
+        }
+
+        this.iniciarJuego();
+        return;
+      }
+
+
+      textoNarrativo.alpha = 0;
+      textoNarrativo.text = textos[index];
+      index++;
+
+      // Fade in
+      let fadeIn = true;
+      let tiempo = 0;
+      const ticker = new PIXI.Ticker();
+      ticker.add(() => {
+        if (fadeIn) {
+          textoNarrativo.alpha += 0.05;
+          if (textoNarrativo.alpha >= 1) {
+            fadeIn = false;
+            tiempo = 0;
+          }
+        } else {
+          tiempo++;
+          if (tiempo > 120) { // esperar 2 segundos
+            textoNarrativo.alpha -= 0.05;
+            if (textoNarrativo.alpha <= 0) {
+              ticker.stop();
+              ticker.destroy();
+              mostrarSiguiente(); // mostrar el próximo texto
+            }
+          }
+        }
+      });
+      ticker.start();
+    };
+
+    mostrarSiguiente(); // inicia la secuencia
+  }
+
+  // finalizacion del juego
+  mostrarGameOver() {
+    // detener el juego y limpiar el ticker de actualización
+    //this.app.ticker.remove(this.update, this);
+    this.app.ticker.remove(this.update);
+
+    // limpiar el stage
+    this.app.stage.removeChildren();
+
+    // crear fondo de Game Over
+    const overlay = new PIXI.Graphics();
+    overlay.beginFill(0x000000, 0.8);
+    overlay.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    overlay.endFill();
+    this.app.stage.addChild(overlay);
+
+    // texto de GAME OVER
+    const textoGameOver = new PIXI.Text('GAME OVER', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 50,
+      fill: '#ff0040',
+      stroke: '#ffffff',
+      strokeThickness: 5,
+    });
+    textoGameOver.anchor.set(0.5);
+    textoGameOver.x = this.app.renderer.width / 2;
+    textoGameOver.y = this.app.renderer.height / 3;
+    this.app.stage.addChild(textoGameOver);
+
+    // botón reintentar
+    const botonReintentar = new PIXI.Text('REINTENTAR', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#ffffff',
+    });
+    botonReintentar.anchor.set(0.5);
+    botonReintentar.x = this.app.renderer.width / 2;
+    botonReintentar.y = this.app.renderer.height / 1.8;
+    botonReintentar.interactive = true;
+    botonReintentar.buttonMode = true;
+    botonReintentar.on('pointerdown', () => {
+      // limpiar todo y reiniciar el juego
+      this.app.stage.removeChildren();
+      this.camara.removeChildren()
+      this.reiniciarJuego();
+    });
+    this.app.stage.addChild(botonReintentar);
+
+    // botón inicio
+    const botonInicio = new PIXI.Text('INICIO', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#ffffff',
+    });
+    botonInicio.anchor.set(0.5);
+    botonInicio.x = this.app.renderer.width / 2;
+    botonInicio.y = this.app.renderer.height / 1.5;
+    botonInicio.interactive = true;
+    botonInicio.buttonMode = true;
+    botonInicio.on('pointerdown', () => {
+      this.app.stage.removeChildren();
+      this.camara.removeChildren()
+      this.mostrarPantallaInicio();
+    });
+    this.app.stage.addChild(botonInicio);
+  }
+
+  reiniciarJuego() {
+    // limpiar cámara y hud
+    this.app.ticker.remove(this.update);
+    this.app.stage.removeChildren();
+
+
+    // resetear 
+    this.fantasmas = [];
+    this.pociones = [];
+    this.proyectiles = [];
+    this.heartPickups = [];
+    this.pumpkins = [];
+    this.pocionActiva = null;
+    this.totalFantasmas = 20;
+    this.fantasmasVivos = 20;
+    this.gameOverMostrado = false;
+
+    // agregar fondo
+    if (this.fondo) this.camara.addChildAt(this.fondo, 0);
+
+    // agregar cámara y hud al stage
+    if (!this.app.stage.children.includes(this.camara)) {
+      this.app.stage.addChild(this.camara);
+    }
+    if (this.hudContainer && !this.app.stage.children.includes(this.hudContainer)) {
+      this.app.stage.addChild(this.hudContainer);
+    }
+
+    // asegurar que el mago esté en la cámara
+    if (this.wizard) {
+      this.camara.addChild(this.wizard);
+    }
+
+    this.iniciarJuego(true);
   }
 }
