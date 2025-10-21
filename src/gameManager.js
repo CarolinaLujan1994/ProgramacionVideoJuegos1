@@ -12,9 +12,10 @@ export class GameManager {
 
   constructor() {
     this.app = new PIXI.Application({
-      width: 1024,
-      height: 780,
-      backgroundColor: 0x333333
+      //width: 1024,
+      //height: 780,
+      resizeTo: window,
+      //backgroundColor: 0x333333
     });
     document.body.appendChild(this.app.view);
 
@@ -37,19 +38,32 @@ export class GameManager {
       .add('thrustWizard', 'src/assets/wizard/thrustWizard.png')
       .add('redHeart', 'src/assets/hearts/redHeart.png')
       .add('greyHeart', 'src/assets/hearts/greyHeart.png')
-      .add('fondo', 'src/assets/background/background1.png')
+      .add('fondo', 'src/assets/background/background2.png')
 
     loader.load((loader, resources) => {
-      // fondo como TilingSprite dentro de la cámara
+      const mapaWidth = 3500;
+      const mapaHeight = 2000;
+
       const fondoTexture = resources.fondo.texture;
       this.fondo = new PIXI.TilingSprite(
         fondoTexture,
-        this.app.renderer.width,
-        this.app.renderer.height
+        mapaWidth,
+        mapaHeight
       );
       this.fondo.tileScale.set(1);
       this.fondo.tilePosition.set(0, 0);
+      this.fondo.position.set(0, 0)
+
+      // fondo agregado
       this.camara.addChildAt(this.fondo, 0);
+
+      const minZoomX = this.app.renderer.width / mapaWidth;
+      const minZoomY = this.app.renderer.height / mapaHeight;
+      const minZoom = Math.max(minZoomX, minZoomY);
+
+      // Aplicar zoom inicial mínimo
+      this.camara.scale.set(minZoom);
+
 
       // fantasmas
       this.colores.forEach(color => {
@@ -136,12 +150,57 @@ export class GameManager {
       this.camara.addChild(this.wizard); // mago dentro de la cámara
 
       // cámara que sigue al mago
+      /*       this.app.ticker.add(() => {
+              this.camara.pivot.x = this.wizard.x;
+              this.camara.pivot.y = this.wizard.y;
+              this.camara.position.x = this.app.renderer.width / 2;
+              this.camara.position.y = this.app.renderer.height / 2;
+            }); */
+
+      if (!this.camara.scaleSet) {
+        this.camara.scale.set(1.0);
+        this.camara.scaleSet = true; // evita que se reestablezca en cada frame
+      }
+
+
       this.app.ticker.add(() => {
-        this.camara.pivot.x = this.wizard.x;
-        this.camara.pivot.y = this.wizard.y;
-        this.camara.position.x = this.app.renderer.width / 2;
-        this.camara.position.y = this.app.renderer.height / 2;
+        // zoom mínimo para que el fondo cubra la ventana
+        const minZoomX = this.app.renderer.width / mapaWidth;
+        const minZoomY = this.app.renderer.height / mapaHeight;
+        const minZoom = Math.max(minZoomX, minZoomY);
+        const maxZoom = 2.0;
+
+        // limitar el zoom
+        this.camara.scale.x = Math.max(minZoom, Math.min(this.camara.scale.x, maxZoom));
+        this.camara.scale.y = Math.max(minZoom, Math.min(this.camara.scale.y, maxZoom));
+
+        // limitar movimiento del mago dentro del mapa
+        const margen = 0;
+        this.wizard.x = Math.max(margen, Math.min(this.wizard.x, mapaWidth - margen));
+        this.wizard.y = Math.max(margen, Math.min(this.wizard.y, mapaHeight - margen));
+
+        // calculo de mitad de pantalla ajustada al zoom
+        const halfWidth = this.app.renderer.width / 2 / this.camara.scale.x;
+        const halfHeight = this.app.renderer.height / 2 / this.camara.scale.y;
+
+        // limitar la cámara para que no se salga del mapa
+        const minPivotX = halfWidth;
+        const maxPivotX = mapaWidth - halfWidth;
+        const minPivotY = halfHeight;
+        const maxPivotY = mapaHeight - halfHeight;
+
+        let pivotX = this.wizard.x;
+        let pivotY = this.wizard.y;
+
+        pivotX = Math.max(minPivotX, Math.min(pivotX, maxPivotX));
+        pivotY = Math.max(minPivotY, Math.min(pivotY, maxPivotY));
+
+        // posición de cámara
+        this.camara.pivot.set(pivotX, pivotY);
+        this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2);
       });
+
+
 
       // zoom con rueda del mouse
       this.app.view.addEventListener('wheel', (e) => {
