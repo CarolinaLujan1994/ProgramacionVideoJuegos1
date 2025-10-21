@@ -263,14 +263,21 @@ export class GameManager {
 
     this.pumpkinTexture = PIXI.Texture.from('src/assets/pumpkin/pumpkin.png');
 
-    // pociones disponibles
-    this.pociones = this.colores.map(c => new Potion(this.app, c, this.potionTextures[c]));
-    this.pocionActiva = null;
-    this.pociones.forEach(p => {
-      if (p.sprite) {
-        this.camara.addChild(p.sprite);
+    // pociones disponibles al iniciar el juego
+    this.pociones = [];
+
+    const cantidadPorColor = 4; 
+
+    this.colores.forEach(color => {
+      for (let i = 0; i < cantidadPorColor; i++) {
+        const pocion = new Potion(this.app, color, this.potionTextures[color]);
+        this.pociones.push(pocion);
+        if (pocion.sprite) {
+          this.camara.addChild(pocion.sprite); 
+        }
       }
     });
+
 
 
     // proyectiles y enemigos
