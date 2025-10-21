@@ -1,6 +1,7 @@
 export class PocionProyectil {
-  constructor(app, origen, destino, color, onImpacto) {
+  constructor(app, camara, origen, destino, color, onImpacto) {
     this.app = app;
+    this.camara = camara
     this.color = color;
     this.onImpacto = onImpacto;
     this.origen = origen;
@@ -9,7 +10,7 @@ export class PocionProyectil {
     this.sprite = new PIXI.Graphics();
     this.sprite.x = origen.x;
     this.sprite.y = origen.y;
-    this.app.stage.addChild(this.sprite);
+    this.camara.addChild(this.sprite);
 
     const dx = destino.x - origen.x;
     const dy = destino.y - origen.y;
@@ -19,6 +20,7 @@ export class PocionProyectil {
 
     this.distanciaRecorrida = 0;
     this.largoMaximo = 300; // alcance máximo del rayo
+
   }
 
   update() {
@@ -44,7 +46,7 @@ export class PocionProyectil {
       rayo.lineTo(dx, dy);
     }
     rayo.lineTo(x2, y2);
-    this.app.stage.addChild(rayo);
+    this.camara.addChild(rayo);
 
     // rayo
     let alpha = 0.6;
@@ -52,7 +54,7 @@ export class PocionProyectil {
       alpha -= 0.05;
       rayo.alpha = alpha;
       if (alpha <= 0) {
-        this.app.stage.removeChild(rayo);
+        this.camara.removeChild(rayo);
         this.app.ticker.remove(fade);
       }
     };

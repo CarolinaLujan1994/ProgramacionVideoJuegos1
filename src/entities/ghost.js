@@ -1,22 +1,22 @@
 export class Ghost {
-  constructor(app, color, textures) {
+  constructor(app, color, textures, camara) {
     this.app = app;
     this.color = color;
     this.hp = 5;
     this.maxHp = 5;
+    this.camara = camara;
 
     if (!textures?.alive || !textures?.mid || !textures?.low) {
       console.warn(`Texturas incompletas para fantasma ${color}`);
       this.invalid = true;
       this.sprite = new PIXI.Sprite();
       this.sprite.visible = false;
-      this.update = () => { };
+      this.update = () => {};
       return;
     }
 
     this.textures = textures;
 
-    // texturas
     this.sprite = new PIXI.AnimatedSprite(this.textures.alive.down.slice());
     this.sprite.animationSpeed = 0.05;
     this.sprite.anchor.set(0.5);
@@ -24,8 +24,9 @@ export class Ghost {
     this.sprite.visible = true;
     this.sprite.play();
 
-    this.sprite.x = Math.random() * 900 + 50;
-    this.sprite.y = Math.random() * 700 + 50;
+    const margen = 50;
+    this.sprite.x = Math.random() * (2500 - margen * 2) + margen;
+    this.sprite.y = Math.random() * (1500 - margen * 2) + margen;
 
     this.vx = (Math.random() - 0.5) * 2;
     this.vy = (Math.random() - 0.5) * 2;
@@ -38,9 +39,10 @@ export class Ghost {
     });
     this.hpText.anchor.set(0.5);
 
-    //this.app.stage.addChild(this.hpBar);
-    //this.app.stage.addChild(this.hpText);
     this.app.stage.addChild(this.sprite);
+
+    this.esTeleportador = Math.random() < 0.3;
+    this.tiempoParaTeleport = Math.random() * 300 + 200;
   }
 
   update() {
@@ -49,11 +51,19 @@ export class Ghost {
     this.sprite.x += this.vx;
     this.sprite.y += this.vy;
 
-    if (this.sprite.x < 20 || this.sprite.x > 980) this.vx *= -1;
-    if (this.sprite.y < 20 || this.sprite.y > 780) this.vy *= -1;
+    if (this.sprite.x < 20 || this.sprite.x > 2500) this.vx *= -1;
+    if (this.sprite.y < 20 || this.sprite.y > 1500) this.vy *= -1;
 
     this.actualizarDireccion();
     this.updateHpBar();
+
+    if (this.esTeleportador && this.hp > 0) {
+      this.tiempoParaTeleport--;
+      if (this.tiempoParaTeleport <= 0) {
+        this.teletransportar();
+        this.tiempoParaTeleport = Math.random() * 300 + 200;
+      }
+    }
   }
 
   actualizarDireccion() {
@@ -75,7 +85,6 @@ export class Ghost {
       this.sprite.textures = nuevaTextura;
       this.sprite.play();
     }
-
   }
 
   updateHpBar() {
@@ -100,12 +109,16 @@ export class Ghost {
     this.hpText.x = this.sprite.x;
     this.hpText.y = this.sprite.y - 30;
 
-
-    // el fantasma se desvanece al morir
     if (this.hp <= 0 && this.sprite.alpha > 0) {
       this.sprite.stop();
       this.app.stage.removeChild(this.hpBar);
       this.app.stage.removeChild(this.hpText);
+
+      // actualizar contador global
+      if (typeof this.app.fantasmasVivos === 'number' && this.app.contadorFantasmas) {
+        this.app.fantasmasVivos--;
+        this.app.contadorFantasmas.text = `${this.app.fantasmasVivos}/${this.app.totalFantasmas}`;
+      }
 
       let alpha = this.sprite.alpha;
       const fadeOut = () => {
@@ -118,6 +131,32 @@ export class Ghost {
       };
       this.app.ticker.add(fadeOut);
     }
+  }
+
+  teletransportar() {
+    const fadeOut = () => {
+      this.sprite.alpha -= 0.1;
+      if (this.sprite.alpha <= 0) {
+        this.sprite.alpha = 0;
+        this.app.ticker.remove(fadeOut);
+
+        const margen = 50;
+        this.sprite.x = Math.random() * (2500 - margen * 2) + margen;
+        this.sprite.y = Math.random() * (1500 - margen * 2) + margen;
+
+        this.app.ticker.add(fadeIn);
+      }
+    };
+
+    const fadeIn = () => {
+      this.sprite.alpha += 0.1;
+      if (this.sprite.alpha >= 1) {
+        this.sprite.alpha = 1;
+        this.app.ticker.remove(fadeIn);
+      }
+    };
+
+    this.app.ticker.add(fadeOut);
   }
 
   collidesWith(wizard) {

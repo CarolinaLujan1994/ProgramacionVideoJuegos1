@@ -6,7 +6,7 @@ export class HeartBar {
     this.app.stage.addChild(this.container);
 
     // intento de coincidencia con el hud de pociones
-    this.TOTAL = 3;
+    this.TOTAL = 5;
     this.ESPACIO = 25;
     this.ANCHO_COZARON = 20;
     this.cantidad = cantidadInicial;

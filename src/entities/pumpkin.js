@@ -8,8 +8,8 @@ export class Pumpkin {
     this.sprite.anchor.set(0.5);
     this.sprite.scale.set(0.15);
 
-    this.sprite.x = Math.random() * 900 + 50;
-    this.sprite.y = Math.random() * 700 + 50;
+    this.sprite.x = Math.random() * 2500 + 50;
+    this.sprite.y = Math.random() * 1500 + 50;
 
     this.sprite.name = 'pumpkin';
     this.visible = true;
@@ -37,8 +37,8 @@ export class Pumpkin {
             heartBar.agregarCorazon();
           });
 
-          heartPickup.sprite.x = Math.random() * 900 + 50;
-          heartPickup.sprite.y = Math.random() * 700 + 50;
+          heartPickup.sprite.x = Math.random() * 3500 + 50;
+          heartPickup.sprite.y = Math.random() * 2000 + 50;
 
 
           this.gameManager.heartPickups.push(heartPickup);

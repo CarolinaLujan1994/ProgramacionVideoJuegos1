@@ -8,8 +8,8 @@ export class Potion {
     this.sprite.anchor.set(0.5);
     this.sprite.scale.set(0.3);
 
-    this.sprite.x = Math.random() * 900 + 50;
-    this.sprite.y = Math.random() * 700 + 50;
+    this.sprite.x = Math.random() * 2500 + 50;
+    this.sprite.y = Math.random() * 1500 + 50;
 
     this.app.stage.addChild(this.sprite);
   }
@@ -59,16 +59,16 @@ export class Potion {
     this.sprite.alpha = 0;
 
 
-    // reaparecen en 15 segundos
+    // reaparecen en 10 segundos
     setTimeout(() => {
       this.visible = true;
       this.sprite.alpha = 1;
-      this.sprite.x = Math.random() * 900 + 50;
-      this.sprite.y = Math.random() * 700 + 50;
+      this.sprite.x = Math.random() * 2500 + 50;
+      this.sprite.y = Math.random() * 1500 + 50;
       if (this.sprite.parent) {
         this.sprite.parent.addChild(this.sprite); //agrega las pociones que reaparecen a la camara
       }
 
-    }, 15000);
+    }, 10000);
   }
 }

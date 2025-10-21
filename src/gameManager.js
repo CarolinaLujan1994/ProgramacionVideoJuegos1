@@ -41,8 +41,8 @@ export class GameManager {
       .add('fondo', 'src/assets/background/background2.png')
 
     loader.load((loader, resources) => {
-      const mapaWidth = 3500;
-      const mapaHeight = 2000;
+      const mapaWidth = 2500;
+      const mapaHeight = 1500;
 
       const fondoTexture = resources.fondo.texture;
       this.fondo = new PIXI.TilingSprite(
@@ -61,7 +61,7 @@ export class GameManager {
       const minZoomY = this.app.renderer.height / mapaHeight;
       const minZoom = Math.max(minZoomX, minZoomY);
 
-      // Aplicar zoom inicial mínimo
+      // zoom inicial mínimo
       this.camara.scale.set(minZoom);
 
 
@@ -168,7 +168,7 @@ export class GameManager {
         const minZoomX = this.app.renderer.width / mapaWidth;
         const minZoomY = this.app.renderer.height / mapaHeight;
         const minZoom = Math.max(minZoomX, minZoomY);
-        const maxZoom = 2.0;
+        const maxZoom = 2;
 
         // limitar el zoom
         this.camara.scale.x = Math.max(minZoom, Math.min(this.camara.scale.x, maxZoom));
@@ -246,6 +246,21 @@ export class GameManager {
     this.pocionHUD.container.y = 18; // justo debajo de las barras
     this.hudContainer.addChild(this.pocionHUD.container);
 
+    // contador de fantasmas
+    this.totalFantasmas = 60;
+    this.fantasmasVivos = 60;
+
+    this.contadorFantasmas = new PIXI.Text(`60/60`, {
+      fontSize: 16,
+      fill: '#ffffff',
+      fontWeight: 'bold'
+    });
+    this.contadorFantasmas.x = 20;
+    this.contadorFantasmas.y = 20;
+    this.app.stage.addChild(this.contadorFantasmas);
+
+    //---------------
+
     this.pumpkinTexture = PIXI.Texture.from('src/assets/pumpkin/pumpkin.png');
 
     // pociones disponibles
@@ -263,7 +278,7 @@ export class GameManager {
     this.heartPickups = [];
     this.fantasmas = [];
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 50; i++) {
       const color = this.colores[Math.floor(Math.random() * this.colores.length)];
       const textura = this.ghostTextures[color];
       const valido = textura?.alive?.down?.[0]?._uvs;
@@ -286,7 +301,7 @@ export class GameManager {
     // crear calabazas
     this.pumpkins = [];
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 60; i++) {
       //const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this.heartTextures.red);
       const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
       this.pumpkins.push(pumpkin);
@@ -321,6 +336,7 @@ export class GameManager {
         if (objetivo && this.pocionActiva?.cargas > 0) {
           const proyectil = new PocionProyectil(
             this.app,
+            this.camara,
             { x: this.wizard.x, y: this.wizard.y },
             { x: objetivo.x, y: objetivo.y },
             this.pocionActiva.color,
@@ -394,7 +410,7 @@ export class GameManager {
           this.heartBar.perderCorazon();
 
           this.wizard.recibirDanio(() => {
-            if (this.heartBar.getCantidad() < 3) {
+            if (this.heartBar.getCantidad() < 5) {
               const redHeartTexture = this.heartTextures?.red;
 
               const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {

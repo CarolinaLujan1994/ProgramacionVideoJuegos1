@@ -8,7 +8,7 @@ export class Wizard extends PIXI.Container {
     this.state = 'idle';
     this.direction = 'front';
     this.destino = null;
-    this.velocidad = 1.7;
+    this.velocidad = 2.5;
     this.invulnerable = false;
 
     // sprite animado
