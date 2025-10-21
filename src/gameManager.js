@@ -512,10 +512,8 @@ export class GameManager {
 
   // inicio del juego
   mostrarPantallaInicio() {
-    // limpiar todo el stage
     this.app.stage.removeChildren();
 
-    // resetear estado del juego
     this.gameOverMostrado = false;
     this.fantasmasVivos = 0;
     this.fantasmas = [];
@@ -523,27 +521,26 @@ export class GameManager {
     this.heartPickups = [];
     this.pocionActiva = null;
 
-    // fondo negro
     const fondoNegro = new PIXI.Graphics();
     fondoNegro.beginFill(0x000000);
     fondoNegro.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
     fondoNegro.endFill();
     this.app.stage.addChild(fondoNegro);
 
-    // título del juego
+    // titulo del juego
     const titulo = new PIXI.Text('ARCANE ESCAPE', {
       fontFamily: 'Press Start 2P',
-      fontSize: 35,
+      fontSize: 50,
       fill: '#000000ff',
       stroke: '#bf36e9ff',
       strokeThickness: 4
     });
     titulo.anchor.set(0.5);
     titulo.x = this.app.renderer.width / 2;
-    titulo.y = 100;
+    titulo.y = this.app.renderer.height * 0.25; // más arriba
     this.app.stage.addChild(titulo);
 
-    // botón COMENZAR
+    // boton comenzar
     const botonComenzar = new PIXI.Text('COMENZAR', {
       fontFamily: 'Press Start 2P',
       fontSize: 25,
@@ -553,13 +550,13 @@ export class GameManager {
     });
     botonComenzar.anchor.set(0.5);
     botonComenzar.x = this.app.renderer.width / 2;
-    botonComenzar.y = 200;
+    botonComenzar.y = this.app.renderer.height * 0.7;
     botonComenzar.interactive = true;
     botonComenzar.buttonMode = true;
     botonComenzar.on('pointerdown', () => this.mostrarIntroNarrativa());
     this.app.stage.addChild(botonComenzar);
 
-    // botón CRÉDITOS
+    // boton creditos
     const botonCreditos = new PIXI.Text('CRÉDITOS', {
       fontFamily: 'Press Start 2P',
       fontSize: 25,
@@ -569,7 +566,7 @@ export class GameManager {
     });
     botonCreditos.anchor.set(0.5);
     botonCreditos.x = this.app.renderer.width / 2;
-    botonCreditos.y = 250;
+    botonCreditos.y = this.app.renderer.height * 0.8;
     botonCreditos.interactive = true;
     botonCreditos.buttonMode = true;
     botonCreditos.on('pointerdown', () => this.mostrarCreditos());
@@ -579,29 +576,34 @@ export class GameManager {
   mostrarCreditos() {
     this.app.stage.removeChildren();
 
-    const creditos = new PIXI.Text('Desarrollado por Carolina Luján\nProgramación de Videojuegos I\nUniversidad Nacional de Hurlingham\nSegundo cuatrimestre 2025', {
-      fontFamily: 'Press Start 2P',
-      fontSize: 25,
-      fill: '#bf36e9ff',
-      stroke: '#000000',
-      strokeThickness: 2,
-      align: 'center'
-    });
+    // texto
+    const creditos = new PIXI.Text(
+      'Desarrollado por Carolina Luján\nProgramación de Videojuegos I\nUniversidad Nacional de Hurlingham\nSegundo cuatrimestre 2025',
+      {
+        fontFamily: 'Press Start 2P',
+        fontSize: 25,
+        fill: '#bf36e9ff',
+        stroke: '#000000',
+        strokeThickness: 2,
+        align: 'center'
+      }
+    );
     creditos.anchor.set(0.5);
     creditos.x = this.app.renderer.width / 2;
-    creditos.y = this.app.renderer.height / 2;
+    creditos.y = this.app.renderer.height * 0.25;
     this.app.stage.addChild(creditos);
 
+    // boton volver
     const volver = new PIXI.Text('VOLVER', {
       fontFamily: 'Press Start 2P',
-      fontSize: 20,
+      fontSize: 25,
       fill: '#000000ff',
       stroke: '#bf36e9ff',
       strokeThickness: 4
     });
     volver.anchor.set(0.5);
     volver.x = this.app.renderer.width / 2;
-    volver.y = creditos.y + 80;
+    volver.y = this.app.renderer.height * 0.8; 
     volver.interactive = true;
     volver.buttonMode = true;
     volver.on('pointerdown', () => this.mostrarPantallaInicio());
@@ -687,66 +689,64 @@ export class GameManager {
 
   // finalizacion del juego
   mostrarGameOver() {
-    // detener el juego y limpiar el ticker de actualización
-    //this.app.ticker.remove(this.update, this);
     this.app.ticker.remove(this.update);
-
-    // limpiar el stage
     this.app.stage.removeChildren();
 
-    // crear fondo de Game Over
     const overlay = new PIXI.Graphics();
     overlay.beginFill(0x000000, 0.8);
     overlay.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
     overlay.endFill();
     this.app.stage.addChild(overlay);
 
-    // texto de GAME OVER
+    // game over
     const textoGameOver = new PIXI.Text('GAME OVER', {
       fontFamily: 'Press Start 2P',
       fontSize: 50,
-      fill: '#ff0040',
-      stroke: '#ffffff',
-      strokeThickness: 5,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
     });
     textoGameOver.anchor.set(0.5);
     textoGameOver.x = this.app.renderer.width / 2;
-    textoGameOver.y = this.app.renderer.height / 3;
+    textoGameOver.y = this.app.renderer.height * 0.25; // mismo que pantalla de inicio
     this.app.stage.addChild(textoGameOver);
 
-    // botón reintentar
+    // bointon reintentar
     const botonReintentar = new PIXI.Text('REINTENTAR', {
       fontFamily: 'Press Start 2P',
       fontSize: 25,
-      fill: '#ffffff',
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
     });
     botonReintentar.anchor.set(0.5);
     botonReintentar.x = this.app.renderer.width / 2;
-    botonReintentar.y = this.app.renderer.height / 1.8;
+    botonReintentar.y = this.app.renderer.height * 0.7;
     botonReintentar.interactive = true;
     botonReintentar.buttonMode = true;
     botonReintentar.on('pointerdown', () => {
-      // limpiar todo y reiniciar el juego
       this.app.stage.removeChildren();
-      this.camara.removeChildren()
+      this.camara.removeChildren();
       this.reiniciarJuego();
     });
     this.app.stage.addChild(botonReintentar);
 
-    // botón inicio
+    // boton de inicio
     const botonInicio = new PIXI.Text('INICIO', {
       fontFamily: 'Press Start 2P',
       fontSize: 25,
-      fill: '#ffffff',
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
     });
     botonInicio.anchor.set(0.5);
     botonInicio.x = this.app.renderer.width / 2;
-    botonInicio.y = this.app.renderer.height / 1.5;
+    botonInicio.y = this.app.renderer.height * 0.8;
     botonInicio.interactive = true;
     botonInicio.buttonMode = true;
     botonInicio.on('pointerdown', () => {
       this.app.stage.removeChildren();
-      this.camara.removeChildren()
+      this.camara.removeChildren();
       this.mostrarPantallaInicio();
     });
     this.app.stage.addChild(botonInicio);
