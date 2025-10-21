@@ -522,7 +522,7 @@ export class GameManager {
     this.pocionActiva = null;
 
     const fondoNegro = new PIXI.Graphics();
-    fondoNegro.beginFill(0x000000);
+    fondoNegro.beginFill(0x0f0f0f);
     fondoNegro.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
     fondoNegro.endFill();
     this.app.stage.addChild(fondoNegro);
@@ -576,6 +576,12 @@ export class GameManager {
   mostrarCreditos() {
     this.app.stage.removeChildren();
 
+    const fondoNegro = new PIXI.Graphics();
+    fondoNegro.beginFill(0x0f0f0f);
+    fondoNegro.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    fondoNegro.endFill();
+    this.app.stage.addChild(fondoNegro);
+
     // texto
     const creditos = new PIXI.Text(
       'Desarrollado por Carolina Luján\nProgramación de Videojuegos I\nUniversidad Nacional de Hurlingham\nSegundo cuatrimestre 2025',
@@ -614,6 +620,13 @@ export class GameManager {
   mostrarIntroNarrativa() {
     this.app.stage.removeChildren(); // limpiar pantalla
 
+    const fondoNarrativa = new PIXI.Graphics();
+    fondoNarrativa.beginFill(0x0f0f0f);
+    fondoNarrativa.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    fondoNarrativa.endFill();
+    this.app.stage.addChild(fondoNarrativa);
+
+
     const textos = [
       'En un bosque encantado,',
       'un mago anciano despierta de su gran etargo.',
@@ -640,7 +653,7 @@ export class GameManager {
       if (index >= textos.length) {
         this.app.stage.removeChildren();
 
-        // 🧩 Reconexión de cámara y fondo
+        // reconexión de cámara y fondo
         if (!this.app.stage.children.includes(this.camara)) {
           this.app.stage.addChild(this.camara);
         }
@@ -693,7 +706,7 @@ export class GameManager {
     this.app.stage.removeChildren();
 
     const overlay = new PIXI.Graphics();
-    overlay.beginFill(0x000000, 0.8);
+    overlay.beginFill(0x0f0f0f, 0.8);
     overlay.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
     overlay.endFill();
     this.app.stage.addChild(overlay);
