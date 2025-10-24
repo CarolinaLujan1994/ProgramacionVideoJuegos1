@@ -420,7 +420,7 @@ export class GameManager {
             }
           );
           this.proyectiles.push(proyectil);
-          this.camara.addChild(proyectil.container) //cambiar por sprite después
+          this.camara.addChild(proyectil.sprite) 
         }
       }
     });
