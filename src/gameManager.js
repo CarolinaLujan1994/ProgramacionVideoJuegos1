@@ -206,6 +206,46 @@ export class GameManager {
       });
 
 
+      let juegoPausado = false;
+      let textoPausa = null;
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'p') {
+          juegoPausado = !juegoPausado;
+
+          if (juegoPausado) {
+            if (!textoPausa) {
+              textoPausa = new PIXI.Text('JUEGO PAUSADO', {
+                fontFamily: 'Press Start 2P',
+                fontSize: 50,
+                fill: '#000000ff',
+                stroke: '#bf36e9ff',
+                strokeThickness: 4
+              });
+              textoPausa.anchor.set(0.5);
+              textoPausa.x = this.app.renderer.width / 2;
+              textoPausa.y = this.app.renderer.height * 0.3;
+              this.app.stage.addChild(textoPausa);
+            }
+
+            textoPausa.visible = true;
+
+            this.app.renderer.render(this.app.stage);
+
+            this.app.stop();
+            console.log('Juego pausado');
+          } else {
+            if (textoPausa) {
+              textoPausa.visible = false;
+            }
+
+            this.app.start();
+            console.log('Juego reanudado');
+          }
+        }
+      });
+
+
 
       // zoom con rueda del mouse
       this.app.view.addEventListener('wheel', (e) => {
@@ -902,7 +942,7 @@ export class GameManager {
       overlay.alpha = alpha;
       if (alpha >= 1) {
         this.app.ticker.remove(fade);
-        this.mostrarPantallaVictoria(); 
+        this.mostrarPantallaVictoria();
       }
     };
 
