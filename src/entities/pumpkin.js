@@ -26,11 +26,12 @@ export class Pumpkin {
   update(wizard, heartBar) {
     if (this.visible && this.collidesWith(wizard)) {
       if (wizard.invulnerable) return; // evitar daño repetido
-      wizard.rebotarDesde(this.sprite); 
+      wizard.rebotarDesde(this.sprite);
 
       heartBar.perderCorazon();
       wizard.recibirDanio(() => {
-        if (heartBar.getCantidad() < 3) {
+        PIXI.sound.play('hurt');
+        if (heartBar.getCantidad() < 5) {
           const redHeartTexture = this.gameManager.heartTextures?.red;
 
           const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {

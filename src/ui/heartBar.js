@@ -38,6 +38,7 @@ export class HeartBar {
   agregarCorazon() {
     if (this.cantidad < this.TOTAL) {
       this.cantidad++;
+      PIXI.sound.play('pickUpHeart')
       this.actualizarSprites();
     }
   }

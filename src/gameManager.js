@@ -207,6 +207,7 @@ export class GameManager {
       });
 
 
+      // pausar juego
       let juegoPausado = false;
       let textoPausa = null;
 
@@ -215,6 +216,7 @@ export class GameManager {
           juegoPausado = !juegoPausado;
 
           if (juegoPausado) {
+            PIXI.sound.play('pause')
             if (!textoPausa) {
               textoPausa = new PIXI.Text('JUEGO PAUSADO', {
                 fontFamily: 'Press Start 2P',
@@ -228,25 +230,19 @@ export class GameManager {
               textoPausa.y = this.app.renderer.height * 0.3;
               this.app.stage.addChild(textoPausa);
             }
-
             textoPausa.visible = true;
-
             this.app.renderer.render(this.app.stage);
-
             this.app.stop();
-            console.log('Juego pausado');
           } else {
             if (textoPausa) {
               textoPausa.visible = false;
             }
-
+            PIXI.sound.play('pause')
             this.app.start();
-            console.log('Juego reanudado');
+
           }
         }
       });
-
-
 
       // zoom con rueda del mouse
       this.app.view.addEventListener('wheel', (e) => {
@@ -272,8 +268,6 @@ export class GameManager {
     // texturas de corazones
     const heartTextures = this.heartTextures;
 
-    //console.log(heartTextures)
-
     // crear barra de corazones con 3 vidas (a revisar)
     this.heartBar = new HeartBar(this.app, 5, heartTextures);
 
@@ -282,9 +276,6 @@ export class GameManager {
     this.hudContainer.x = this.app.renderer.width - 140; // se ajusta según el ancho total del hud
     this.hudContainer.y = 20;
     this.app.stage.addChild(this.hudContainer);
-    //this.hudContainer.addChild(this.heartBar.container);
-    //this.hudContainer.addChild(this.contadorFantasmas);
-
 
     // barra de carga
     this.chargeBar = new ChargeBar(this.app);
@@ -404,7 +395,11 @@ export class GameManager {
               const daño = (this.pocionActiva.color === objetivo.color) ? 3 : 1;
               objetivo.hp -= daño;
               objetivo.updateHpBar();
+              if (objetivo.hp <= 0) {
+                PIXI.sound.play('killingGhost')
+              }
               this.pocionActiva.cargas--;
+              PIXI.sound.play('shoot');
               this.chargeBar.update(this.pocionActiva.color, this.pocionActiva.cargas);
               this.pocionHUD.gastarCarga(this.pocionActiva.color);
 
@@ -416,6 +411,7 @@ export class GameManager {
                   this.chargeBar.update(siguiente.color, siguiente.cargas);
                   this.wizard.activarAura(siguiente.color);
                 } else {
+                  PIXI.sound.play('outOfPotion');
                   this.pocionActiva = null;
                 }
               }
@@ -463,7 +459,7 @@ export class GameManager {
       // activar game Over
       if (this.heartBar.getCantidad() <= 0 && !this.gameOverMostrado) {
         this.gameOverMostrado = true;
-        this.mostrarGameOver();
+        this.iniciarTransicionDerrota();
       }
 
       // colisiones con fantasmas
@@ -484,6 +480,7 @@ export class GameManager {
           this.heartBar.perderCorazon();
 
           this.wizard.recibirDanio(() => {
+            PIXI.sound.play('hurt')
             if (this.heartBar.getCantidad() < 5) {
               const redHeartTexture = this.heartTextures?.red;
               const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
@@ -554,6 +551,7 @@ export class GameManager {
           } else {
             p.hide();
           }
+          PIXI.sound.play('pickUpPotion')
         }
       });
     };
@@ -932,6 +930,9 @@ export class GameManager {
   }
 
   iniciarTransicionVictoria() {
+    PIXI.sound.stop('generalGame')
+    PIXI.sound.play('victory')
+
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
     const texturaCongelada = PIXI.Texture.from(captura);
@@ -960,6 +961,44 @@ export class GameManager {
       if (alpha >= 1) {
         this.app.ticker.remove(fade);
         this.mostrarPantallaVictoria();
+      }
+    };
+
+    this.app.ticker.add(fade);
+  }
+
+  iniciarTransicionDerrota() {
+    PIXI.sound.stop('generalGame');
+    PIXI.sound.play('gameOver');
+
+    // congelar imagen
+    const captura = this.app.renderer.extract.canvas(this.app.stage);
+    const texturaCongelada = PIXI.Texture.from(captura);
+    const spriteCongelado = new PIXI.Sprite(texturaCongelada);
+    spriteCongelado.x = 0;
+    spriteCongelado.y = 0;
+    spriteCongelado.width = this.app.renderer.width;
+    spriteCongelado.height = this.app.renderer.height;
+
+    this.app.stage.removeChildren(); // limpiar stage
+    this.app.stage.addChild(spriteCongelado); // mostrar imagen congelada
+
+    // color para desvanecer
+    const overlay = new PIXI.Graphics();
+    overlay.beginFill(0x0f0f0f); // 
+    overlay.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    overlay.endFill();
+    overlay.alpha = 0;
+    this.app.stage.addChild(overlay);
+
+    // fade in del overlay
+    let alpha = 0;
+    const fade = () => {
+      alpha += 0.015;
+      overlay.alpha = alpha;
+      if (alpha >= 1) {
+        this.app.ticker.remove(fade);
+        this.mostrarGameOver();
       }
     };
 
@@ -1002,20 +1041,9 @@ export class GameManager {
     const mostrarSiguiente = () => {
       if (index >= textos.length) {
         this.app.stage.removeChildren();
-
-        // reconexión de cámara y fondo
-        /*         if (!this.app.stage.children.includes(this.camara)) {
-                  this.app.stage.addChild(this.camara);
-                }
-        
-                if (!this.camara.children.includes(this.fondo)) {
-                  this.camara.addChildAt(this.fondo, 0);
-                } */
-
         this.mostrarPantallaInicio();
         return;
       }
-
 
       textoNarrativo.alpha = 0;
       textoNarrativo.text = textos[index];
@@ -1046,17 +1074,11 @@ export class GameManager {
       });
       ticker.start();
     };
-
     mostrarSiguiente(); // inicia la secuencia
   }
 
   // sonidos y musica
   cargarSonidos() {
-    if (!PIXI.sound) {
-      console.log('PIXI.sound no está disponible aún');
-      return;
-    }
-
     PIXI.sound.add({
       shoot: 'src/assets/music-sfx/shoot.mp3',
       hurt: 'src/assets/music-sfx/hurt.mp3',
