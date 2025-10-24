@@ -19,6 +19,8 @@ export class GameManager {
     });
     document.body.appendChild(this.app.view);
 
+    this.victoriaMostrada = false;
+
     // cámara
     this.camara = new PIXI.Container();
     this.app.stage.addChild(this.camara);
@@ -253,8 +255,8 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // contador de fantasmas
-    this.totalFantasmas = 20;
-    this.fantasmasVivos = 20;
+    this.totalFantasmas = 1;
+    this.fantasmasVivos = 1;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -464,6 +466,13 @@ export class GameManager {
         }
       }
 
+      // mostrar la pantalla de victoria
+      const todosMuertos = this.fantasmas.every(f => f.hp <= 0);
+      if (todosMuertos && !this.victoriaMostrada) {
+        this.victoriaMostrada = true;
+        this.iniciarTransicionVictoria();
+      }
+
       // contador de fantasmas
       this.fantasmasVivos = this.fantasmas.filter(f => f.hp > 0).length;
       this.contadorFantasmas.text = `${this.fantasmasVivos}/${this.totalFantasmas}`;
@@ -556,6 +565,23 @@ export class GameManager {
     botonComenzar.on('pointerdown', () => this.mostrarIntroNarrativa());
     this.app.stage.addChild(botonComenzar);
 
+
+    // boton tutorial
+    const botonTutorial = new PIXI.Text('TUTORIAL', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
+    });
+    botonTutorial.anchor.set(0.5);
+    botonTutorial.x = this.app.renderer.width / 2;
+    botonTutorial.y = this.app.renderer.height * 0.8;
+    botonTutorial.interactive = true;
+    botonTutorial.buttonMode = true;
+    botonTutorial.on('pointerdown', () => this.mostrarTutorial());
+    this.app.stage.addChild(botonTutorial);
+
     // boton creditos
     const botonCreditos = new PIXI.Text('CRÉDITOS', {
       fontFamily: 'Press Start 2P',
@@ -566,13 +592,14 @@ export class GameManager {
     });
     botonCreditos.anchor.set(0.5);
     botonCreditos.x = this.app.renderer.width / 2;
-    botonCreditos.y = this.app.renderer.height * 0.8;
+    botonCreditos.y = this.app.renderer.height * 0.9;
     botonCreditos.interactive = true;
     botonCreditos.buttonMode = true;
     botonCreditos.on('pointerdown', () => this.mostrarCreditos());
     this.app.stage.addChild(botonCreditos);
   }
 
+  // pantalla de creditos
   mostrarCreditos() {
     this.app.stage.removeChildren();
 
@@ -616,6 +643,50 @@ export class GameManager {
     this.app.stage.addChild(volver);
   }
 
+  // pantalla de tutorial
+  mostrarTutorial() {
+    this.app.stage.removeChildren();
+
+    const fondoNegro = new PIXI.Graphics();
+    fondoNegro.beginFill(0x0f0f0f);
+    fondoNegro.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    fondoNegro.endFill();
+    this.app.stage.addChild(fondoNegro);
+
+    // texto
+    const creditos = new PIXI.Text(
+      'Clic izquierdo -> mover\nClic derecho -> disparar\n"P" -> pausa',
+      {
+        fontFamily: 'Press Start 2P',
+        fontSize: 25,
+        fill: '#bf36e9ff',
+        stroke: '#000000',
+        strokeThickness: 2,
+        align: 'center'
+      }
+    );
+    creditos.anchor.set(0.5);
+    creditos.x = this.app.renderer.width / 2;
+    creditos.y = this.app.renderer.height * 0.25;
+    this.app.stage.addChild(creditos);
+
+    // boton volver
+    const volver = new PIXI.Text('VOLVER', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 25,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4
+    });
+    volver.anchor.set(0.5);
+    volver.x = this.app.renderer.width / 2;
+    volver.y = this.app.renderer.height * 0.8;
+    volver.interactive = true;
+    volver.buttonMode = true;
+    volver.on('pointerdown', () => this.mostrarPantallaInicio());
+    this.app.stage.addChild(volver);
+  }
+
   // mostrar narrativa del juego
   mostrarIntroNarrativa() {
     this.app.stage.removeChildren(); // limpiar pantalla
@@ -628,10 +699,11 @@ export class GameManager {
 
 
     const textos = [
-      'En un bosque encantado,',
-      'un mago anciano despierta de su gran etargo.',
-      'Criaturas lo acechan...',
-      'pero hay esperanza en cada poción recolectada.'
+      '...'
+      /*       'En un bosque encantado,',
+            'un mago anciano despierta de su gran etargo.',
+            'Criaturas lo acechan...',
+            'pero hay esperanza en cada poción recolectada.' */
     ];
 
     let index = 0;
@@ -765,6 +837,7 @@ export class GameManager {
     this.app.stage.addChild(botonInicio);
   }
 
+  // reiniciar juego luego del game over
   reiniciarJuego() {
     // limpiar cámara y hud
     this.app.ticker.remove(this.update);
@@ -799,5 +872,124 @@ export class GameManager {
     }
 
     this.iniciarJuego(true);
+  }
+
+  iniciarTransicionVictoria() {
+    // congelar imagen
+    const captura = this.app.renderer.extract.canvas(this.app.stage);
+    const texturaCongelada = PIXI.Texture.from(captura);
+    const spriteCongelado = new PIXI.Sprite(texturaCongelada);
+    spriteCongelado.x = 0;
+    spriteCongelado.y = 0;
+    spriteCongelado.width = this.app.renderer.width;
+    spriteCongelado.height = this.app.renderer.height;
+
+    this.app.stage.removeChildren(); // limpiar stage
+    this.app.stage.addChild(spriteCongelado); // mostrar imagen congelada
+
+    // color para desvanecer
+    const overlay = new PIXI.Graphics();
+    overlay.beginFill(0x0f0f0f); // 
+    overlay.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    overlay.endFill();
+    overlay.alpha = 0;
+    this.app.stage.addChild(overlay);
+
+    // fade in del overlay
+    let alpha = 0;
+    const fade = () => {
+      alpha += 0.015;
+      overlay.alpha = alpha;
+      if (alpha >= 1) {
+        this.app.ticker.remove(fade);
+        this.mostrarPantallaVictoria(); 
+      }
+    };
+
+    this.app.ticker.add(fade);
+  }
+
+  // mostrar pantalla final del juego al ganar
+  mostrarPantallaVictoria() {
+    this.app.stage.removeChildren(); // limpiar pantalla
+
+    const fondoNarrativa = new PIXI.Graphics();
+    fondoNarrativa.beginFill(0x0f0f0f);
+    fondoNarrativa.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    fondoNarrativa.endFill();
+    this.app.stage.addChild(fondoNarrativa);
+
+
+    const textos = [
+      'El último hechizo ha sido lanzado.',
+      'El mago, de pie en el bosque, ha vencido.',
+      'Las criaturas se disuelven en la niebla.',
+      'El bosque respira... y agradece.'
+    ];
+
+    let index = 0;
+    const textoNarrativo = new PIXI.Text('', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 35,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4,
+      wordWrap: true,
+      wordWrapWidth: this.app.renderer.width - 100
+    });
+    textoNarrativo.anchor.set(0.5);
+    textoNarrativo.x = this.app.renderer.width / 2;
+    textoNarrativo.y = this.app.renderer.height / 2;
+    this.app.stage.addChild(textoNarrativo);
+
+    const mostrarSiguiente = () => {
+      if (index >= textos.length) {
+        this.app.stage.removeChildren();
+
+        // reconexión de cámara y fondo
+        /*         if (!this.app.stage.children.includes(this.camara)) {
+                  this.app.stage.addChild(this.camara);
+                }
+        
+                if (!this.camara.children.includes(this.fondo)) {
+                  this.camara.addChildAt(this.fondo, 0);
+                } */
+
+        this.mostrarPantallaInicio();
+        return;
+      }
+
+
+      textoNarrativo.alpha = 0;
+      textoNarrativo.text = textos[index];
+      index++;
+
+      // Fade in
+      let fadeIn = true;
+      let tiempo = 0;
+      const ticker = new PIXI.Ticker();
+      ticker.add(() => {
+        if (fadeIn) {
+          textoNarrativo.alpha += 0.05;
+          if (textoNarrativo.alpha >= 1) {
+            fadeIn = false;
+            tiempo = 0;
+          }
+        } else {
+          tiempo++;
+          if (tiempo > 120) { // esperar 2 segundos
+            textoNarrativo.alpha -= 0.05;
+            if (textoNarrativo.alpha <= 0) {
+              ticker.stop();
+              ticker.destroy();
+              mostrarSiguiente(); // mostrar el próximo texto
+            }
+          }
+        }
+      });
+      ticker.start();
+    };
+
+    mostrarSiguiente(); // inicia la secuencia
   }
 }
