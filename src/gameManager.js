@@ -8,8 +8,9 @@ import { PocionHUD } from './ui/potionHUD.js';
 import { PocionProyectil } from './entities/projectilePotion.js';
 import { Pumpkin } from './entities/pumpkin.js';
 
-export class GameManager {
+const PIXI = window.PIXI;
 
+export class GameManager {
   constructor() {
     this.app = new PIXI.Application({
       //width: 1024,
@@ -267,6 +268,7 @@ export class GameManager {
   }
 
   iniciarJuego() {
+
     // texturas de corazones
     const heartTextures = this.heartTextures;
 
@@ -295,8 +297,8 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // contador de fantasmas
-    this.totalFantasmas = 1;
-    this.fantasmasVivos = 1;
+    this.totalFantasmas = 20;
+    this.fantasmasVivos = 20;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -420,7 +422,7 @@ export class GameManager {
             }
           );
           this.proyectiles.push(proyectil);
-          this.camara.addChild(proyectil.sprite) 
+          this.camara.addChild(proyectil.sprite)
         }
       }
     });
@@ -555,7 +557,6 @@ export class GameManager {
         }
       });
     };
-
     this.app.ticker.add(this.update); // loop controlado
   }
 
@@ -602,9 +603,11 @@ export class GameManager {
     botonComenzar.y = this.app.renderer.height * 0.7;
     botonComenzar.interactive = true;
     botonComenzar.buttonMode = true;
-    botonComenzar.on('pointerdown', () => this.mostrarIntroNarrativa());
+    botonComenzar.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
+      this.mostrarIntroNarrativa()
+    });
     this.app.stage.addChild(botonComenzar);
-
 
     // boton tutorial
     const botonTutorial = new PIXI.Text('TUTORIAL', {
@@ -619,7 +622,10 @@ export class GameManager {
     botonTutorial.y = this.app.renderer.height * 0.8;
     botonTutorial.interactive = true;
     botonTutorial.buttonMode = true;
-    botonTutorial.on('pointerdown', () => this.mostrarTutorial());
+    botonTutorial.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
+      this.mostrarTutorial()
+    });
     this.app.stage.addChild(botonTutorial);
 
     // boton creditos
@@ -635,7 +641,10 @@ export class GameManager {
     botonCreditos.y = this.app.renderer.height * 0.9;
     botonCreditos.interactive = true;
     botonCreditos.buttonMode = true;
-    botonCreditos.on('pointerdown', () => this.mostrarCreditos());
+    botonCreditos.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
+      this.mostrarCreditos()
+    });
     this.app.stage.addChild(botonCreditos);
   }
 
@@ -679,7 +688,10 @@ export class GameManager {
     volver.y = this.app.renderer.height * 0.8;
     volver.interactive = true;
     volver.buttonMode = true;
-    volver.on('pointerdown', () => this.mostrarPantallaInicio());
+    volver.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
+      this.mostrarPantallaInicio()
+    });
     this.app.stage.addChild(volver);
   }
 
@@ -723,7 +735,10 @@ export class GameManager {
     volver.y = this.app.renderer.height * 0.8;
     volver.interactive = true;
     volver.buttonMode = true;
-    volver.on('pointerdown', () => this.mostrarPantallaInicio());
+    volver.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
+      this.mostrarPantallaInicio()
+    });
     this.app.stage.addChild(volver);
   }
 
@@ -850,6 +865,7 @@ export class GameManager {
     botonReintentar.interactive = true;
     botonReintentar.buttonMode = true;
     botonReintentar.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
       this.app.stage.removeChildren();
       this.camara.removeChildren();
       this.reiniciarJuego();
@@ -870,6 +886,7 @@ export class GameManager {
     botonInicio.interactive = true;
     botonInicio.buttonMode = true;
     botonInicio.on('pointerdown', () => {
+      PIXI.sound.play('pressButton');
       this.app.stage.removeChildren();
       this.camara.removeChildren();
       this.mostrarPantallaInicio();
@@ -1031,5 +1048,32 @@ export class GameManager {
     };
 
     mostrarSiguiente(); // inicia la secuencia
+  }
+
+  // sonidos y musica
+  cargarSonidos() {
+    if (!PIXI.sound) {
+      console.log('PIXI.sound no está disponible aún');
+      return;
+    }
+
+    PIXI.sound.add({
+      shoot: 'src/assets/music-sfx/shoot.mp3',
+      hurt: 'src/assets/music-sfx/hurt.mp3',
+      generalGame: {
+        url: 'src/assets/music-sfx/generalGame.mp3',
+        options: { loop: true, volume: 0.3 }
+      },
+      killingGhost: 'src/assets/music-sfx/killingGhost.mp3',
+      outOfPotion: 'src/assets/music-sfx/outOfPotion.mp3',
+      pause: 'src/assets/music-sfx/pause.mp3',
+      pickUpHeart: 'src/assets/music-sfx/pickUpHeart.mp3',
+      pickUpPotion: 'src/assets/music-sfx/pickUpPotion.mp3',
+      pressButton: 'src/assets/music-sfx/pressButton.mp3',
+      victory: 'src/assets/music-sfx/victory.mp3',
+      gameOver: 'src/assets/music-sfx/gameOver.mp3'
+    });
+
+    PIXI.sound.play('generalGame');
   }
 }
