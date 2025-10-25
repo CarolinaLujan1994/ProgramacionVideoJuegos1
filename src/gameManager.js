@@ -14,17 +14,13 @@ const PIXI = window.PIXI;
 export class GameManager {
   constructor() {
     this.app = new PIXI.Application({
-      //width: 1024,
-      //height: 780,
       resizeTo: window,
-      //backgroundColor: 0x333333
     });
     document.body.appendChild(this.app.view);
 
     this.victoriaMostrada = false;
 
-    PIXI.sound.muteAll = true;
-
+    //PIXI.sound.muteAll = true;
 
     // cámara
     this.camara = new PIXI.Container();
@@ -247,6 +243,7 @@ export class GameManager {
 
       window.addEventListener('keydown', (e) => {
         if (e.key.toLowerCase() === 'p') {
+
           juegoPausado = !juegoPausado;
 
           if (juegoPausado) {
@@ -429,14 +426,16 @@ export class GameManager {
           });
 
         if (objetivo && this.pocionActiva?.cargas > 0) {
+          const colorActual = this.pocionActiva.color;
+
           const proyectil = new PocionProyectil(
             this.app,
             this.camara,
             { x: this.wizard.x, y: this.wizard.y },
             { x: objetivo.x, y: objetivo.y },
-            this.pocionActiva.color,
+            colorActual,
             () => {
-              const daño = (this.pocionActiva.color === objetivo.color) ? 3 : 1;
+              const daño = (colorActual === objetivo.color) ? 3 : 1;
               objetivo.hp -= daño;
               objetivo.updateHpBar();
 
@@ -447,10 +446,8 @@ export class GameManager {
                   //PIXI.sound.play('killingSkeleton');
                 }
 
-                // eliminar del escenario
                 this.camara.removeChild(objetivo.sprite);
 
-                // los esqueletos reaparecen después de 10 segundos
                 setTimeout(() => {
                   if (objetivo && typeof objetivo.respawn === 'function') {
                     objetivo.respawn();
@@ -462,8 +459,8 @@ export class GameManager {
               // hud de pociones
               this.pocionActiva.cargas--;
               PIXI.sound.play('shoot');
-              this.chargeBar.update(this.pocionActiva.color, this.pocionActiva.cargas);
-              this.pocionHUD.gastarCarga(this.pocionActiva.color);
+              this.chargeBar.update(colorActual, this.pocionActiva.cargas);
+              this.pocionHUD.gastarCarga(colorActual);
 
               if (this.pocionActiva.cargas <= 0) {
                 this.wizard.desactivarAura();
@@ -478,8 +475,6 @@ export class GameManager {
                 }
               }
             }
-
-
           );
 
           this.proyectiles.push(proyectil);
