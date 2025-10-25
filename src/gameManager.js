@@ -891,11 +891,11 @@ export class GameManager {
 
 
     const textos = [
-      '...'
-      /* 'En un bosque encantado,',
+      /* '...' */
+      'En un bosque encantado,',
       'un mago anciano despierta de su gran letargo.',
       'Criaturas lo acechan...',
-      'pero hay esperanza en cada poción recolectada.' */
+      'pero hay esperanza en cada poción recolectada.'
     ];
 
     let index = 0;
@@ -948,7 +948,7 @@ export class GameManager {
           }
         } else {
           tiempo++;
-          if (tiempo > 120) { // esperar 2 segundos
+          if (tiempo > 180) { // esperar segundos
             textoNarrativo.alpha -= 0.05;
             if (textoNarrativo.alpha <= 0) {
               ticker.stop();
@@ -966,8 +966,6 @@ export class GameManager {
 
   // finalizacion del juego
   mostrarGameOver() {
-    PIXI.sound.stop('generalGame');
-    PIXI.sound.play('gameOver');
     this.app.ticker.remove(this.update);
     this.app.stage.removeChildren();
 
@@ -1075,6 +1073,9 @@ export class GameManager {
   }
 
   iniciarTransicionVictoria() {
+    PIXI.sound.stop('generalGame')
+    PIXI.sound.play('victory')
+
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
     const texturaCongelada = PIXI.Texture.from(captura);
@@ -1098,7 +1099,7 @@ export class GameManager {
     // fade in del overlay
     let alpha = 0;
     const fade = () => {
-      alpha += 0.005;
+      alpha += 0.015;
       overlay.alpha = alpha;
       if (alpha >= 1) {
         this.app.ticker.remove(fade);
@@ -1111,6 +1112,10 @@ export class GameManager {
   }
 
   iniciarTransicionDerrota() {
+    PIXI.sound.stop('hurt')
+    PIXI.sound.stop('generalGame')
+    PIXI.sound.play('gameOver')
+
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
     const texturaCongelada = PIXI.Texture.from(captura);
@@ -1134,7 +1139,7 @@ export class GameManager {
     // fade in del overlay
     let alpha = 0;
     const fade = () => {
-      alpha += 0.005;
+      alpha += 0.015;
       overlay.alpha = alpha;
       if (alpha >= 1) {
         this.app.ticker.remove(fade);
@@ -1150,10 +1155,6 @@ export class GameManager {
     this.app.stage.removeChildren(); // limpiar pantalla
     this.camara.removeChildren();
     this.app.ticker.remove(this.update);
-    this.app.stage.removeChildren();
-    PIXI.sound.stop('generalGame')
-    PIXI.sound.play('victory')
-
 
     // resetear 
     this.fantasmas = [];
@@ -1177,7 +1178,7 @@ export class GameManager {
     const textos = [
       'El último hechizo ha sido lanzado.',
       'El mago, de pie en el bosque, ha vencido.',
-      'Las criaturas se disuelven en la niebla.',
+      /* 'Las criaturas se disuelven en la niebla.', */
       'El bosque respira... y agradece.'
     ];
 
@@ -1220,7 +1221,7 @@ export class GameManager {
           }
         } else {
           tiempo++;
-          if (tiempo > 120) { // esperar 2 segundos
+          if (tiempo > 180) { // esperar segundos
             textoNarrativo.alpha -= 0.05;
             if (textoNarrativo.alpha <= 0) {
               ticker.stop();
