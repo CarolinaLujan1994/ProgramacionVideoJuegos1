@@ -135,7 +135,6 @@ respawn() {
   this.hpBar.visible = true;
   this.hpText.visible = true;
 
-  // Si no está agregado al contenedor de la cámara, lo agregamos
   if (!this.camara.children.includes(this.sprite)) this.camara.addChild(this.sprite);
 
 

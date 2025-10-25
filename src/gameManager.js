@@ -322,8 +322,8 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // contador de fantasmas
-    this.totalFantasmas = 10;
-    this.fantasmasVivos = 10;
+    this.totalFantasmas = 1;
+    this.fantasmasVivos = 1;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -697,7 +697,6 @@ export class GameManager {
     }
   }
 
-
   // inicio del juego
   mostrarPantallaInicio() {
     this.app.stage.removeChildren();
@@ -967,6 +966,8 @@ export class GameManager {
 
   // finalizacion del juego
   mostrarGameOver() {
+    PIXI.sound.stop('generalGame');
+    PIXI.sound.play('gameOver');
     this.app.ticker.remove(this.update);
     this.app.stage.removeChildren();
 
@@ -1028,6 +1029,8 @@ export class GameManager {
       this.app.stage.removeChildren();
       this.camara.removeChildren();
       this.mostrarPantallaInicio();
+      PIXI.sound.stop('gameOver')
+      PIXI.sound.play('generalGame')
     });
     this.app.stage.addChild(botonInicio);
   }
@@ -1037,6 +1040,8 @@ export class GameManager {
     // limpiar cámara y hud
     this.app.ticker.remove(this.update);
     this.app.stage.removeChildren();
+    PIXI.sound.stop('gameOver')
+    PIXI.sound.play('generalGame')
 
 
     // resetear 
@@ -1070,9 +1075,6 @@ export class GameManager {
   }
 
   iniciarTransicionVictoria() {
-    PIXI.sound.stop('generalGame')
-    PIXI.sound.play('victory')
-
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
     const texturaCongelada = PIXI.Texture.from(captura);
@@ -1096,21 +1098,19 @@ export class GameManager {
     // fade in del overlay
     let alpha = 0;
     const fade = () => {
-      alpha += 0.015;
+      alpha += 0.005;
       overlay.alpha = alpha;
       if (alpha >= 1) {
         this.app.ticker.remove(fade);
         this.mostrarPantallaVictoria();
       }
+
     };
 
     this.app.ticker.add(fade);
   }
 
   iniciarTransicionDerrota() {
-    PIXI.sound.stop('generalGame');
-    PIXI.sound.play('gameOver');
-
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
     const texturaCongelada = PIXI.Texture.from(captura);
@@ -1134,7 +1134,7 @@ export class GameManager {
     // fade in del overlay
     let alpha = 0;
     const fade = () => {
-      alpha += 0.015;
+      alpha += 0.005;
       overlay.alpha = alpha;
       if (alpha >= 1) {
         this.app.ticker.remove(fade);
@@ -1148,6 +1148,24 @@ export class GameManager {
   // mostrar pantalla final del juego al ganar
   mostrarPantallaVictoria() {
     this.app.stage.removeChildren(); // limpiar pantalla
+    this.camara.removeChildren();
+    this.app.ticker.remove(this.update);
+    this.app.stage.removeChildren();
+    PIXI.sound.stop('generalGame')
+    PIXI.sound.play('victory')
+
+
+    // resetear 
+    this.fantasmas = [];
+    this.pociones = [];
+    this.proyectiles = [];
+    this.heartPickups = [];
+    this.pumpkins = [];
+    this.pocionActiva = null;
+    this.totalFantasmas = 20;
+    this.fantasmasVivos = 20;
+    this.gameOverMostrado = false;
+
 
     const fondoNarrativa = new PIXI.Graphics();
     fondoNarrativa.beginFill(0x0f0f0f);
