@@ -319,8 +319,8 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // contador de fantasmas
-    this.totalFantasmas = 1;
-    this.fantasmasVivos = 1;
+    this.totalFantasmas = 20;
+    this.fantasmasVivos = 20;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
