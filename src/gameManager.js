@@ -7,6 +7,7 @@ import { ChargeBar } from './ui/chargeBar.js';
 import { PocionHUD } from './ui/potionHUD.js';
 import { PocionProyectil } from './entities/projectilePotion.js';
 import { Pumpkin } from './entities/pumpkin.js';
+import { Skeleton } from './entities/skeleton.js';
 
 const PIXI = window.PIXI;
 
@@ -22,12 +23,20 @@ export class GameManager {
 
     this.victoriaMostrada = false;
 
+    PIXI.sound.muteAll = true;
+
+
     // cámara
     this.camara = new PIXI.Container();
     this.app.stage.addChild(this.camara);
 
     this.colores = ['red', 'blue', 'green', 'yellow', 'pink'];
     this.ghostTextures = {};
+
+    this.skeletons = [];
+    this.skeletonsActivated = false;
+    this.skeletonTextures = null;
+
 
     const loader = new PIXI.Loader();
     this.colores.forEach(color => {
@@ -42,6 +51,7 @@ export class GameManager {
       .add('redHeart', 'src/assets/hearts/redHeart.png')
       .add('greyHeart', 'src/assets/hearts/greyHeart.png')
       .add('fondo', 'src/assets/background/background2.png')
+      .add('skeleton', 'src/assets/skeleton/skeleton.png')
 
     loader.load((loader, resources) => {
       const mapaWidth = 2500;
@@ -99,6 +109,26 @@ export class GameManager {
           low: buildSet(2)
         };
       });
+
+      // esqueleto textura
+      const skeletonBase = resources.skeleton.texture.baseTexture;
+      const skeletonFrames = [];
+      const columnasSkeleton = 9;
+      const filasSkeleton = 4;
+      const frameWidth = 512 / columnasSkeleton;
+      const frameHeight = 256 / filasSkeleton;
+
+      for (let i = 0; i < filasSkeleton * columnasSkeleton; i++) {
+        const x = (i % columnasSkeleton) * frameWidth;
+        const y = Math.floor(i / columnasSkeleton) * frameHeight;
+        const rect = new PIXI.Rectangle(x, y, frameWidth, frameHeight);
+        skeletonFrames.push(new PIXI.Texture(skeletonBase, rect));
+      }
+
+      this.skeletonTextures = {
+        walk: skeletonFrames
+      };
+
 
       // pociones
       this.potionTextures = {};
@@ -165,11 +195,6 @@ export class GameManager {
 
 
       this.app.ticker.add(() => {
-        /*         if (this.fondo && this.wizard) {
-                  this.wizard.x = this.fondo.x + this.fondo.width / 2;
-                  this.wizard.y = this.fondo.y + this.fondo.height / 2;
-                } */
-
         // zoom mínimo para que el fondo cubra la ventana       
         const minZoomX = this.app.renderer.width / mapaWidth;
         const minZoomY = this.app.renderer.height / mapaHeight;
@@ -206,6 +231,15 @@ export class GameManager {
         this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2);
       });
 
+      // esquelos que aparecen cuando quedan 10 fantmas
+      const fantasmasVivos = this.ghosts?.filter(g => g.hp > 0).length || 0;
+
+      if (fantasmasVivos <= 10 && !this.skeletonsActivated) {
+        this.skeletonsActivated = true;
+        this.spawnSkeletonGroup(); // genera los primeros 5
+      }
+      // actualizacion de esqueletos
+      this.skeletons.forEach(skeleton => skeleton.update());
 
       // pausar juego
       let juegoPausado = false;
@@ -288,8 +322,8 @@ export class GameManager {
     this.hudContainer.addChild(this.pocionHUD.container);
 
     // contador de fantasmas
-    this.totalFantasmas = 20;
-    this.fantasmasVivos = 20;
+    this.totalFantasmas = 10;
+    this.fantasmasVivos = 10;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -332,6 +366,9 @@ export class GameManager {
     this.proyectiles = [];
     this.heartPickups = [];
     this.fantasmas = [];
+    this.skeletons = [];
+    this.skeletonsActivated = false;
+
 
     for (let i = 0; i < this.fantasmasVivos; i++) {
       const color = this.colores[Math.floor(Math.random() * this.colores.length)];
@@ -378,11 +415,18 @@ export class GameManager {
       if (e.button === 2) {
         this.wizard.setState('thrust');
 
-        const objetivo = this.fantasmas.find(f => {
-          const dx = punto.x - f.x;
-          const dy = punto.y - f.y;
-          return f.hp > 0 && Math.sqrt(dx * dx + dy * dy) < 20;
-        });
+        // buscar un objetivo: fantasma o esqueleto
+        const objetivo =
+          this.fantasmas.find(f => {
+            const dx = punto.x - f.x;
+            const dy = punto.y - f.y;
+            return f.hp > 0 && Math.sqrt(dx * dx + dy * dy) < 20;
+          }) ||
+          this.skeletons.find(s => {
+            const dx = punto.x - s.x;
+            const dy = punto.y - s.y;
+            return s.hp > 0 && Math.sqrt(dx * dx + dy * dy) < 20;
+          });
 
         if (objetivo && this.pocionActiva?.cargas > 0) {
           const proyectil = new PocionProyectil(
@@ -395,9 +439,27 @@ export class GameManager {
               const daño = (this.pocionActiva.color === objetivo.color) ? 3 : 1;
               objetivo.hp -= daño;
               objetivo.updateHpBar();
+
               if (objetivo.hp <= 0) {
-                PIXI.sound.play('killingGhost')
+                if (objetivo.constructor.name === 'Ghost') {
+                  PIXI.sound.play('killingGhost');
+                } else if (objetivo.constructor.name === 'Skeleton') {
+                  //PIXI.sound.play('killingSkeleton');
+                }
+
+                // eliminar del escenario
+                this.camara.removeChild(objetivo.sprite);
+
+                // los esqueletos reaparecen después de 10 segundos
+                setTimeout(() => {
+                  if (objetivo && typeof objetivo.respawn === 'function') {
+                    objetivo.respawn();
+                    this.camara.addChild(objetivo.sprite);
+                  }
+                }, 10000);
               }
+
+              // hud de pociones
               this.pocionActiva.cargas--;
               PIXI.sound.play('shoot');
               this.chargeBar.update(this.pocionActiva.color, this.pocionActiva.cargas);
@@ -416,11 +478,15 @@ export class GameManager {
                 }
               }
             }
+
+
           );
+
           this.proyectiles.push(proyectil);
-          this.camara.addChild(proyectil.sprite)
+          this.camara.addChild(proyectil.sprite);
         }
       }
+
     });
 
     this.start();
@@ -455,6 +521,8 @@ export class GameManager {
 
         return valido;
       });
+
+
 
       // activar game Over
       if (this.heartBar.getCantidad() <= 0 && !this.gameOverMostrado) {
@@ -525,7 +593,15 @@ export class GameManager {
         return activo;
       });
 
+      // insertar los corazones a la camara
       this.heartPickups.forEach(p => {
+        if (p.sprite && !this.camara.children.includes(p.sprite)) {
+          this.camara.addChild(p.sprite);
+        }
+      });
+
+      // insertar los esqueletos a la camara
+      this.skeletons.forEach(p => {
         if (p.sprite && !this.camara.children.includes(p.sprite)) {
           this.camara.addChild(p.sprite);
         }
@@ -536,8 +612,63 @@ export class GameManager {
         p.update(this.wizard, this.heartBar);
       });
 
+      // colisiones con esqueletos
+      for (const s of this.skeletons) {
+        try {
+          s.update();
+        } catch (err) {
+          console.error('Error en s.update():', err, s);
+          continue;
+        }
+
+        const dx = this.wizard.x - s.x;
+        const dy = this.wizard.y - s.y;
+        const distancia = Math.sqrt(dx * dx + dy * dy);
+
+        if (s.hp > 0 && distancia < 20 && !this.wizard.invulnerable) {
+          this.wizard.rebotarDesde(s);
+          this.heartBar.perderCorazon();
+
+          this.wizard.recibirDanio(() => {
+            PIXI.sound.play('hurt');
+            if (this.heartBar.getCantidad() < 5) {
+              const redHeartTexture = this.heartTextures?.red;
+              const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
+                this.heartBar.agregarCorazon();
+              });
+              this.heartPickups.push(heartPickup);
+            }
+          });
+
+          this.wizard.invulnerable = true;
+          let tiempoParpadeo = 60;
+          const parpadeo = () => {
+            tiempoParpadeo--;
+            this.wizard.visible = tiempoParpadeo % 10 < 5;
+            if (tiempoParpadeo <= 0) {
+              this.wizard.visible = true;
+              this.wizard.invulnerable = false;
+              this.app.ticker.remove(parpadeo);
+            }
+          };
+          this.app.ticker.add(parpadeo);
+        }
+      }
+
+
       // proyectiles
       this.proyectiles = this.proyectiles.filter(p => p.update());
+
+      // los esqueletos aparecen cuando quedan 10 fantasmas
+      if (this.fantasmasVivos <= 10) {
+        if (!this.skeletonsActivated) {
+          this.skeletonsActivated = true;
+          this.spawnSkeletonGroup();
+        }
+      } else {
+        this.skeletonsActivated = false; // permite reaparecer esqueletos otra vez
+      }
+
 
       // pociones
       this.pociones.forEach(p => {
@@ -557,6 +688,15 @@ export class GameManager {
     };
     this.app.ticker.add(this.update); // loop controlado
   }
+
+  // cantidad de esqueletos que aparecen 
+  spawnSkeletonGroup() {
+    for (let i = 0; i < 5; i++) {
+      const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard);
+      this.skeletons.push(skeleton);
+    }
+  }
+
 
   // inicio del juego
   mostrarPantallaInicio() {
@@ -752,11 +892,11 @@ export class GameManager {
 
 
     const textos = [
-      /* '...' */
-      'En un bosque encantado,',
-      'un mago anciano despierta de su gran etargo.',
+      '...'
+      /* 'En un bosque encantado,',
+      'un mago anciano despierta de su gran letargo.',
       'Criaturas lo acechan...',
-      'pero hay esperanza en cada poción recolectada.'
+      'pero hay esperanza en cada poción recolectada.' */
     ];
 
     let index = 0;
