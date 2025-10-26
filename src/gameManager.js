@@ -267,7 +267,7 @@ export class GameManager {
           juegoPausado = !juegoPausado;
 
           if (juegoPausado) {
-            PIXI.sound.play('pause')
+            PIXI.sound.play('pause', { volume: 0.2 })
             if (!textoPausa) {
               textoPausa = new PIXI.Text('JUEGO PAUSADO', {
                 fontFamily: 'Press Start 2P',
@@ -288,7 +288,7 @@ export class GameManager {
             if (textoPausa) {
               textoPausa.visible = false;
             }
-            PIXI.sound.play('pause')
+            PIXI.sound.play('pause', { volume: 0.2 })
             this.app.start();
 
           }
@@ -514,14 +514,6 @@ export class GameManager {
         console.warn(`No se pudo ubicar calabaza #${i} sin superposición.`);
       }
     }
-    /*     this.pumpkins = [];
-    
-        for (let i = 0; i < 120; i++) {
-          //const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this.heartTextures.red);
-          const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
-          this.pumpkins.push(pumpkin);
-          this.camara.addChild(pumpkin.sprite);
-        } */
 
 
 
@@ -571,7 +563,7 @@ export class GameManager {
 
               if (objetivo.hp <= 0) {
                 if (objetivo.constructor.name === 'Ghost') {
-                  PIXI.sound.play('killingGhost');
+                  PIXI.sound.play('killingGhost', { volume: 0.2 });
                 } else if (objetivo.constructor.name === 'Skeleton') {
                   //PIXI.sound.play('killingSkeleton');
                 }
@@ -589,7 +581,7 @@ export class GameManager {
               /* ----- INTERACCIÓN DE LAS POCIONES ----- */
               if (this.pocionActiva) {
                 this.pocionActiva.cargas--;
-                PIXI.sound.play('shoot');
+                PIXI.sound.play('shoot', { volume: 0.2 });
                 this.chargeBar.update(this.pocionActiva.color, this.pocionActiva.cargas);
                 this.pocionHUD.gastarCarga(this.pocionActiva.color);
 
@@ -605,7 +597,7 @@ export class GameManager {
                     this.chargeBar.update(siguiente.color, siguiente.cargas);
                     this.wizard.activarAura(siguiente.color);
                   } else {
-                    PIXI.sound.play('outOfPotion');
+                    PIXI.sound.play('outOfPotion', { volume: 0.2 });
                     this.pocionActiva = null;
                   }
                 }
@@ -683,7 +675,7 @@ export class GameManager {
           this.heartBar.perderCorazon();
 
           this.wizard.recibirDanio(() => {
-            PIXI.sound.play('hurt')
+            PIXI.sound.play('hurt', { volume: 0.2 })
             if (this.heartBar.getCantidad() < 5) {
               const redHeartTexture = this.heartTextures?.red;
               const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
@@ -773,7 +765,7 @@ export class GameManager {
           this.heartBar.perderCorazon();
 
           this.wizard.recibirDanio(() => {
-            PIXI.sound.play('hurt');
+            PIXI.sound.play('hurt', { volume: 0.2 });
             if (this.heartBar.getCantidad() < 5) {
               const redHeartTexture = this.heartTextures?.red;
               const heartPickup = new HeartPickup(this.app, redHeartTexture, () => {
@@ -828,7 +820,7 @@ export class GameManager {
           } else {
             p.hide();
           }
-          PIXI.sound.play('pickUpPotion')
+          PIXI.sound.play('pickUpPotion', { volume: 0.2 })
         }
       });
     };
@@ -1228,7 +1220,7 @@ export class GameManager {
 
   iniciarTransicionVictoria() {
     PIXI.sound.stop('generalGame')
-    PIXI.sound.play('victory')
+    PIXI.sound.play('victory', { volume: 0.3 })
 
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
@@ -1270,7 +1262,7 @@ export class GameManager {
   iniciarTransicionDerrota() {
     PIXI.sound.stop('hurt')
     PIXI.sound.stop('generalGame')
-    PIXI.sound.play('gameOver')
+    PIXI.sound.play('gameOver', { volume: 0.3 })
 
     // congelar imagen
     const captura = this.app.renderer.extract.canvas(this.app.stage);
