@@ -360,7 +360,7 @@ export class GameManager {
       this.botonMute.buttonMode = true;
 
       // tamaño
-      const targetSize = 64;
+      const targetSize = 65;
       const escala = targetSize / this.botonMute.texture.width;
       this.botonMute.scale.set(escala);
 
@@ -370,7 +370,8 @@ export class GameManager {
 
       // posición con la ventnaa
       window.addEventListener("resize", () => {
-        this.botonMute.y = this.app.screen.height - this.botonMute.height - 20;
+        this.botonMute.y = this.app.renderer.screen.height - this.botonMute.height - 20;
+        //this.botonMute.y = this.app.screen.height - this.botonMute.height - 20;
       });
 
       // agregar a la pantalla
@@ -535,22 +536,30 @@ export class GameManager {
               }
 
               /* ----- INTERACCIÓN DE LAS POCIONES ----- */
-              this.pocionActiva.cargas--;
-              PIXI.sound.play('shoot');
-              this.chargeBar.update(colorActual, this.pocionActiva.cargas);
-              this.pocionHUD.gastarCarga(colorActual);
+              if (this.pocionActiva) {
+                this.pocionActiva.cargas--;
+                PIXI.sound.play('shoot');
+                this.chargeBar.update(this.pocionActiva.color, this.pocionActiva.cargas);
+                this.pocionHUD.gastarCarga(this.pocionActiva.color);
 
-              if (this.pocionActiva.cargas <= 0) {
-                this.wizard.desactivarAura();
-                const siguiente = this.pocionHUD.getSiguientePocion();
-                if (siguiente) {
-                  this.pocionActiva = { color: siguiente.color, cargas: siguiente.cargas };
-                  this.chargeBar.update(siguiente.color, siguiente.cargas);
-                  this.wizard.activarAura(siguiente.color);
-                } else {
-                  PIXI.sound.play('outOfPotion');
-                  this.pocionActiva = null;
+                if (this.pocionActiva.cargas <= 0) {
+                  this.wizard.desactivarAura();
+                  const siguiente = this.pocionHUD.getSiguientePocion();
+
+                  if (siguiente) {
+                    this.pocionActiva = {
+                      color: siguiente.color,
+                      cargas: siguiente.cargas
+                    };
+                    this.chargeBar.update(siguiente.color, siguiente.cargas);
+                    this.wizard.activarAura(siguiente.color);
+                  } else {
+                    PIXI.sound.play('outOfPotion');
+                    this.pocionActiva = null;
+                  }
                 }
+              } else {
+                console.warn("No hay poción activa al impactar.");
               }
             }
           );
@@ -934,7 +943,7 @@ export class GameManager {
 
     // texto
     const creditos = new PIXI.Text(
-      'Clic izquierdo -> mover\nClic derecho -> disparar\n"P" -> pausa',
+      'Clic izquierdo -> mover\nClic derecho -> disparar\n"P" -> pausa\n"M" -> silenciar música',
       {
         fontFamily: 'Press Start 2P',
         fontSize: 25,
