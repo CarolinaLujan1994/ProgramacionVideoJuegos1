@@ -565,7 +565,7 @@ export class GameManager {
                 if (objetivo.constructor.name === 'Ghost') {
                   PIXI.sound.play('killingGhost', { volume: 0.2 });
                 } else if (objetivo.constructor.name === 'Skeleton') {
-                  //PIXI.sound.play('killingSkeleton');
+                  PIXI.sound.play('killingSkeleton', { volume: 0.2 });
                 }
 
                 this.camara.removeChild(objetivo.sprite);
@@ -1391,10 +1391,7 @@ export class GameManager {
     PIXI.sound.add({
       shoot: 'src/assets/music-sfx/shoot.mp3',
       hurt: 'src/assets/music-sfx/hurt.mp3',
-      generalGame: {
-        url: 'src/assets/music-sfx/generalGame.mp3',
-        options: { loop: true, volume: 0.3 }
-      },
+      generalGame: 'src/assets/music-sfx/generalGame.mp3',
       killingGhost: 'src/assets/music-sfx/killingGhost.mp3',
       outOfPotion: 'src/assets/music-sfx/outOfPotion.mp3',
       pause: 'src/assets/music-sfx/pause.mp3',
@@ -1402,12 +1399,14 @@ export class GameManager {
       pickUpPotion: 'src/assets/music-sfx/pickUpPotion.mp3',
       pressButton: 'src/assets/music-sfx/pressButton.mp3',
       victory: 'src/assets/music-sfx/victory.mp3',
-      gameOver: 'src/assets/music-sfx/gameOver.mp3'
+      gameOver: 'src/assets/music-sfx/gameOver.mp3',
+      killingSkeleton: 'src/assets/music-sfx/killingSkeleton.mp3'
     });
 
     const muteGuardado = JSON.parse(localStorage.getItem("audioMuted"));
     this.musica = PIXI.sound.find('generalGame');
     this.musica.volume = muteGuardado ? 0 : 0.3;
+    this.musica.loop = true
     this.musica.play();
   }
 }
