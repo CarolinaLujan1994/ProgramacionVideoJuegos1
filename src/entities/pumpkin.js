@@ -30,7 +30,7 @@ export class Pumpkin {
 
       heartBar.perderCorazon();
       wizard.recibirDanio(() => {
-        PIXI.sound.play('hurt');
+        PIXI.sound.play('hurt', { volume: 0.2});
         if (heartBar.getCantidad() < 5) {
           const redHeartTexture = this.gameManager.heartTextures?.red;
 

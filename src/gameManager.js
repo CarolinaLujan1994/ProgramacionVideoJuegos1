@@ -806,7 +806,7 @@ export class GameManager {
         this.skeletonsActivated = false; // permite reaparecer esqueletos otra vez
       }
 
-      /* -------------------- COLISIONES CON POCIONES -------------------- */
+      /* -------------------- COLISIÓN CON POCIONES -------------------- */
 
       // pociones
       this.pociones.forEach(p => {
