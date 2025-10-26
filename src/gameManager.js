@@ -20,7 +20,7 @@ export class GameManager {
 
     this.victoriaMostrada = false;
 
-    //PIXI.sound.muteAll = true;
+    /* -------------------- CAMARA -------------------- */
 
     // cámara
     this.camara = new PIXI.Container();
@@ -33,6 +33,7 @@ export class GameManager {
     this.skeletonsActivated = false;
     this.skeletonTextures = null;
 
+    /* -------------------- LOADER -------------------- */
 
     const loader = new PIXI.Loader();
     this.colores.forEach(color => {
@@ -48,6 +49,8 @@ export class GameManager {
       .add('greyHeart', 'src/assets/hearts/greyHeart.png')
       .add('fondo', 'src/assets/background/background2.png')
       .add('skeleton', 'src/assets/skeleton/skeleton.png')
+      .add('muteOff', 'src/assets/mute/muteOff.png')
+      .add('muteOn', 'src/assets/mute/muteOn.png')
 
     loader.load((loader, resources) => {
       const mapaWidth = 2500;
@@ -63,8 +66,12 @@ export class GameManager {
       this.fondo.tilePosition.set(0, 0);
       this.fondo.position.set(0, 0)
 
+      /* -------------------- FONDO -------------------- */
+
       // fondo agregado
       this.camara.addChildAt(this.fondo, 0);
+
+      /* -------------------- ZOOM -------------------- */
 
       const minZoomX = this.app.renderer.width / mapaWidth;
       const minZoomY = this.app.renderer.height / mapaHeight;
@@ -73,6 +80,7 @@ export class GameManager {
       // zoom inicial mínimo
       this.camara.scale.set(minZoom);
 
+      /* -------------------- TEXTURA DE FANTASMAS -------------------- */
 
       // fantasmas
       this.colores.forEach(color => {
@@ -106,6 +114,8 @@ export class GameManager {
         };
       });
 
+      /* -------------------- TEXTURA DE ESQUELETOS -------------------- */
+
       // esqueleto textura
       const skeletonBase = resources.skeleton.texture.baseTexture;
       const skeletonFrames = [];
@@ -125,6 +135,7 @@ export class GameManager {
         walk: skeletonFrames
       };
 
+      /* -------------------- TEXTURA DE POCIONES -------------------- */
 
       // pociones
       this.potionTextures = {};
@@ -135,11 +146,14 @@ export class GameManager {
         }
       });
 
+      /* -------------------- TEXTURA DE CORAZONES -------------------- */
       // corazones
       this.heartTextures = {
         red: resources.redHeart.texture,
         grey: resources.greyHeart.texture
       };
+
+      /* -------------------- TEXTURA DE MAGO -------------------- */
 
       // mago
       const columnasPorEstado = {
@@ -190,7 +204,11 @@ export class GameManager {
       }
 
 
+      /* -------------------- TICKER -------------------- */
+
+
       this.app.ticker.add(() => {
+        /* -------------------- ZOOM Y CÁMARA QUE SIGUE AL MAGO -------------------- */
         // zoom mínimo para que el fondo cubra la ventana       
         const minZoomX = this.app.renderer.width / mapaWidth;
         const minZoomY = this.app.renderer.height / mapaHeight;
@@ -227,6 +245,7 @@ export class GameManager {
         this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2);
       });
 
+      /* -------------------- ESQUELETOS QUE APARECEN CUANDO QUEDA MENOS DE 10 FANSTAMAS -------------------- */
       // esquelos que aparecen cuando quedan 10 fantmas
       const fantasmasVivos = this.ghosts?.filter(g => g.hp > 0).length || 0;
 
@@ -237,7 +256,8 @@ export class GameManager {
       // actualizacion de esqueletos
       this.skeletons.forEach(skeleton => skeleton.update());
 
-      // pausar juego
+      /* -------------------- PAUSAR JUEGO -------------------- */
+
       let juegoPausado = false;
       let textoPausa = null;
 
@@ -275,7 +295,8 @@ export class GameManager {
         }
       });
 
-      // zoom con rueda del mouse
+      /* -------------------- ZOOM CON LA RUEDA DEL MOUSE -------------------- */
+
       this.app.view.addEventListener('wheel', (e) => {
         const zoomFactor = 1.05;
         const scale = e.deltaY < 0
@@ -290,35 +311,92 @@ export class GameManager {
         }
       });
 
+      this.resources = resources;
+
+      /* -------------------- INICIAR JUEGO CON PANTALLA -------------------- */
+
       this.mostrarPantallaInicio();
     });
   }
 
   iniciarJuego() {
 
-    // texturas de corazones
+    /* -------------------- AL INICIAR EL JUEGO -------------------- */
+
+    /* ----- TEXTURA DE CORAZONES ----- */
     const heartTextures = this.heartTextures;
 
-    // crear barra de corazones con 3 vidas (a revisar)
+    /* ----- BARRA DE CORAZONES CON 5 VIDAS ----- */
     this.heartBar = new HeartBar(this.app, 5, heartTextures);
 
-    // hud agrupado: barra de carga + pociones
+    /* ----- HUD AGRUPADO CON BARRA DE CARA + POCIONES ----- */
     this.hudContainer = new PIXI.Container();
     this.hudContainer.x = this.app.renderer.width - 140; // se ajusta según el ancho total del hud
     this.hudContainer.y = 20;
     this.app.stage.addChild(this.hudContainer);
 
-    // barra de carga
+    /* ----- BARRA DE CARGA (POCIONES) ----- */
     this.chargeBar = new ChargeBar(this.app);
     this.chargeBar.updatePosition(0, 0); // dentro del hudContainer
     this.hudContainer.addChild(this.chargeBar.container);
 
-    // hud de pociones alineado debajo
+    /* ----- HUD DE POCIONES ALINEADOS ----- */
     this.pocionHUD = new PocionHUD(this.app, this.potionTextures);
     this.pocionHUD.container.y = 18; // justo debajo de las barras
     this.hudContainer.addChild(this.pocionHUD.container);
 
-    // contador de fantasmas
+    /* ----- BOTÓN MUTE ----- */
+    const texturaOn = this.resources?.muteOn?.texture;
+    const texturaOff = this.resources?.muteOff?.texture;
+
+    if (!texturaOn || !texturaOff) {
+      console.log("Texturas no cargadas");
+    } else {
+      const muteGuardado = JSON.parse(localStorage.getItem("audioMuted")) ?? false;
+
+      // Ccrear boton
+      this.botonMute = new PIXI.Sprite(muteGuardado ? texturaOff : texturaOn);
+      this.botonMute.interactive = true;
+      this.botonMute.buttonMode = true;
+
+      // tamaño
+      const targetSize = 64;
+      const escala = targetSize / this.botonMute.texture.width;
+      this.botonMute.scale.set(escala);
+
+      // posición
+      this.botonMute.x = 20;
+      this.botonMute.y = this.app.screen.height - this.botonMute.height - 20;
+
+      // posición con la ventnaa
+      window.addEventListener("resize", () => {
+        this.botonMute.y = this.app.screen.height - this.botonMute.height - 20;
+      });
+
+      // agregar a la pantalla
+      this.app.stage.addChild(this.botonMute);
+
+      // Muteat con la letra M
+      window.addEventListener("keydown", (event) => {
+        if (event.key.toLowerCase() === "m") {
+          if (!this.musica || !this.botonMute) {
+            console.warn("La música o el botón mute no están listos.");
+            return;
+          }
+
+          const estaMuteado = this.musica.volume === 0;
+          const nuevoVolumen = estaMuteado ? 0.3 : 0;
+
+          this.musica.volume = nuevoVolumen;
+          localStorage.setItem("audioMuted", JSON.stringify(nuevoVolumen === 0));
+          this.botonMute.texture = nuevoVolumen === 0 ? texturaOff : texturaOn;
+
+          console.log(nuevoVolumen === 0);
+        }
+      });
+    }
+
+    /* ----- CONTADOR DE FANTASMAS ----- */
     this.totalFantasmas = 20;
     this.fantasmasVivos = 20;
 
@@ -340,11 +418,10 @@ export class GameManager {
 
     this.app.stage.addChild(this.contadorFantasmas);
 
-    //---------------
-
+    /* ----- TEXTURA DE CALABAZAS ----- */
     this.pumpkinTexture = PIXI.Texture.from('src/assets/pumpkin/pumpkin.png');
 
-    // pociones disponibles al iniciar el juego
+    /* ----- POCIONES DISPONIBLES AL INCIAR EL JUEGO ----- */
     this.pociones = [];
 
     const cantidadPorColor = 4;
@@ -359,7 +436,7 @@ export class GameManager {
       }
     });
 
-    // proyectiles y enemigos
+    /* ----- PYOECTILES Y ENEMIGOS ----- */
     this.proyectiles = [];
     this.heartPickups = [];
     this.fantasmas = [];
@@ -367,6 +444,7 @@ export class GameManager {
     this.skeletonsActivated = false;
 
 
+    /* ----- FANTASMAS VIVOS AL INCIAL EL JUEGO ----- */
     for (let i = 0; i < this.fantasmasVivos; i++) {
       const color = this.colores[Math.floor(Math.random() * this.colores.length)];
       const textura = this.ghostTextures[color];
@@ -387,7 +465,7 @@ export class GameManager {
       }
     }
 
-    // crear calabazas
+    /* ----- CALABAZAS AL INICIAR EL JUEGO ----- */
     this.pumpkins = [];
 
     for (let i = 0; i < 120; i++) {
@@ -396,11 +474,11 @@ export class GameManager {
       this.pumpkins.push(pumpkin);
       this.camara.addChild(pumpkin.sprite);
     }
-
-    // interacción del jugador
+    /*-------------------- INTERACCIÓN DEL JUGEADOR -------------------- */
     this.app.stage.interactive = true;
     this.app.view.addEventListener('contextmenu', e => e.preventDefault());
 
+    /* ----- INTERACTUAR CON EL MOUSE ----- */
     this.app.view.addEventListener('pointerdown', e => {
       const rect = this.app.view.getBoundingClientRect();
       const punto = this.camara.toLocal(new PIXI.Point(e.clientX - rect.left, e.clientY - rect.top));
@@ -456,7 +534,7 @@ export class GameManager {
                 }, 10000);
               }
 
-              // hud de pociones
+              /* ----- INTERACCIÓN DE LAS POCIONES ----- */
               this.pocionActiva.cargas--;
               PIXI.sound.play('shoot');
               this.chargeBar.update(colorActual, this.pocionActiva.cargas);
@@ -489,6 +567,8 @@ export class GameManager {
 
   start() {
     this.update = () => {
+      /* -------------------- MAGO -------------------- */
+
       if (this.wizard) {
         // posición inicial solo si no está en cámara
         if (!this.camara.children.includes(this.wizard)) {
@@ -517,15 +597,15 @@ export class GameManager {
         return valido;
       });
 
+      /* -------------------- PANTALLA DE GAME OVER -------------------- */
 
-
-      // activar game Over
       if (this.heartBar.getCantidad() <= 0 && !this.gameOverMostrado) {
         this.gameOverMostrado = true;
         this.iniciarTransicionDerrota();
       }
 
-      // colisiones con fantasmas
+      /* -------------------- COLISICIÓN CON FANTASMAS -------------------- */
+
       for (const f of this.fantasmas) {
         try {
           f.update();
@@ -568,18 +648,21 @@ export class GameManager {
         }
       }
 
-      // mostrar la pantalla de victoria
+      /* -------------------- PANTALLA DE VICTORIA -------------------- */
+
       const todosMuertos = this.fantasmas.every(f => f.hp <= 0);
       if (todosMuertos && !this.victoriaMostrada) {
         this.victoriaMostrada = true;
         this.iniciarTransicionVictoria();
       }
 
-      // contador de fantasmas
+      /* -------------------- CONTADOR DE FANTASMAS -------------------- */
+
       this.fantasmasVivos = this.fantasmas.filter(f => f.hp > 0).length;
       this.contadorFantasmas.text = `${this.fantasmasVivos}/${this.totalFantasmas}`;
 
-      // recoger corazones
+      /* -------------------- RECOGER CORAZONES EN EL MAPA -------------------- */
+
       this.heartPickups = this.heartPickups.filter(p => {
         const activo = p.update(this.wizard);
         if (!activo && p.sprite?.parent) {
@@ -588,6 +671,8 @@ export class GameManager {
         return activo;
       });
 
+      /* -------------------- INSERTAR CORAZONES EN EL MAPA -------------------- */
+
       // insertar los corazones a la camara
       this.heartPickups.forEach(p => {
         if (p.sprite && !this.camara.children.includes(p.sprite)) {
@@ -595,19 +680,22 @@ export class GameManager {
         }
       });
 
-      // insertar los esqueletos a la camara
+      /* -------------------- INSERTAR ESQUELETOS EN EL MAPA -------------------- */
+
       this.skeletons.forEach(p => {
         if (p.sprite && !this.camara.children.includes(p.sprite)) {
           this.camara.addChild(p.sprite);
         }
       });
 
-      // colisiones con calabazas
+      /* -------------------- COLISIÓN CON CALABAZAS -------------------- */
+
       this.pumpkins.forEach(p => {
         p.update(this.wizard, this.heartBar);
       });
 
-      // colisiones con esqueletos
+      /* -------------------- COLISIÓN CON ESQUELETOS -------------------- */
+
       for (const s of this.skeletons) {
         try {
           s.update();
@@ -650,9 +738,11 @@ export class GameManager {
         }
       }
 
+      /* -------------------- PROYECTILES -------------------- */
 
-      // proyectiles
       this.proyectiles = this.proyectiles.filter(p => p.update());
+
+      /* -------------------- ESQUELETOS QUE APARECEN CUANDO QUEDAN 10 FANTASMAS -------------------- */
 
       // los esqueletos aparecen cuando quedan 10 fantasmas
       if (this.fantasmasVivos <= 10) {
@@ -664,6 +754,7 @@ export class GameManager {
         this.skeletonsActivated = false; // permite reaparecer esqueletos otra vez
       }
 
+      /* -------------------- COLISIONES CON POCIONES -------------------- */
 
       // pociones
       this.pociones.forEach(p => {
@@ -684,7 +775,8 @@ export class GameManager {
     this.app.ticker.add(this.update); // loop controlado
   }
 
-  // cantidad de esqueletos que aparecen 
+  /* -------------------- FUNCIÓN PARA REAPARECER ESQUELETOS -------------------- */
+
   spawnSkeletonGroup() {
     for (let i = 0; i < 5; i++) {
       const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard);
@@ -692,7 +784,8 @@ export class GameManager {
     }
   }
 
-  // inicio del juego
+  /* -------------------- PANTALLA DE INICIO DEL JUEGO -------------------- */
+
   mostrarPantallaInicio() {
     this.app.stage.removeChildren();
 
@@ -780,7 +873,8 @@ export class GameManager {
     this.app.stage.addChild(botonCreditos);
   }
 
-  // pantalla de creditos
+  /* -------------------- PANTALLA DE CRÉDITOS -------------------- */
+
   mostrarCreditos() {
     this.app.stage.removeChildren();
 
@@ -827,7 +921,8 @@ export class GameManager {
     this.app.stage.addChild(volver);
   }
 
-  // pantalla de tutorial
+  /* -------------------- PANTALLA DE TUTORIAL -------------------- */
+
   mostrarTutorial() {
     this.app.stage.removeChildren();
 
@@ -874,7 +969,8 @@ export class GameManager {
     this.app.stage.addChild(volver);
   }
 
-  // mostrar narrativa del juego
+  /* -------------------- PANTALLA DE NARRATIVVA INICIAL -------------------- */
+
   mostrarIntroNarrativa() {
     this.app.stage.removeChildren(); // limpiar pantalla
 
@@ -886,11 +982,11 @@ export class GameManager {
 
 
     const textos = [
-      /* '...' */
-      'En un bosque encantado,',
+      '...'
+      /* 'En un bosque encantado,',
       'un mago anciano despierta de su gran letargo.',
       'Criaturas lo acechan...',
-      'pero hay esperanza en cada poción recolectada.'
+      'pero hay esperanza en cada poción recolectada.' */
     ];
 
     let index = 0;
@@ -959,7 +1055,8 @@ export class GameManager {
     mostrarSiguiente(); // inicia la secuencia
   }
 
-  // finalizacion del juego
+  /* -------------------- PANTALLA DE GAME OVER -------------------- */
+
   mostrarGameOver() {
     this.app.ticker.remove(this.update);
     this.app.stage.removeChildren();
@@ -1028,7 +1125,7 @@ export class GameManager {
     this.app.stage.addChild(botonInicio);
   }
 
-  // reiniciar juego luego del game over
+  /* -------------------- REINICIAR EL JUEGO LUEGO DEL GAME OVER -------------------- */
   reiniciarJuego() {
     // limpiar cámara y hud
     this.app.ticker.remove(this.update);
@@ -1066,6 +1163,8 @@ export class GameManager {
 
     this.iniciarJuego(true);
   }
+
+  /* -------------------- TRANSICIÓN A LA PANTALLA DE VICTORIA -------------------- */
 
   iniciarTransicionVictoria() {
     PIXI.sound.stop('generalGame')
@@ -1106,6 +1205,8 @@ export class GameManager {
     this.app.ticker.add(fade);
   }
 
+  /* -------------------- TRANSICIÓN A LA PANTALLA DE DERROTA -------------------- */
+
   iniciarTransicionDerrota() {
     PIXI.sound.stop('hurt')
     PIXI.sound.stop('generalGame')
@@ -1145,7 +1246,8 @@ export class GameManager {
     this.app.ticker.add(fade);
   }
 
-  // mostrar pantalla final del juego al ganar
+  /* --------------------  PANTALLA DE VICTORIA -------------------- */
+
   mostrarPantallaVictoria() {
     this.app.stage.removeChildren(); // limpiar pantalla
     this.camara.removeChildren();
@@ -1231,7 +1333,8 @@ export class GameManager {
     mostrarSiguiente(); // inicia la secuencia
   }
 
-  // sonidos y musica
+  /* -------------------- MÚSICA Y EFECTOS DE SONIDO -------------------- */
+
   cargarSonidos() {
     PIXI.sound.add({
       shoot: 'src/assets/music-sfx/shoot.mp3',
@@ -1250,6 +1353,9 @@ export class GameManager {
       gameOver: 'src/assets/music-sfx/gameOver.mp3'
     });
 
-    PIXI.sound.play('generalGame');
+    const muteGuardado = JSON.parse(localStorage.getItem("audioMuted"));
+    this.musica = PIXI.sound.find('generalGame');
+    this.musica.volume = muteGuardado ? 0 : 0.3;
+    this.musica.play();
   }
 }
