@@ -466,15 +466,66 @@ export class GameManager {
       }
     }
 
-    /* ----- CALABAZAS AL INICIAR EL JUEGO ----- */
-    this.pumpkins = [];
+    /* ----- CALABAZAS AL INICIAR EL JUEGO (que no se superpongan) ----- */
 
-    for (let i = 0; i < 120; i++) {
-      //const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this.heartTextures.red);
-      const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
-      this.pumpkins.push(pumpkin);
-      this.camara.addChild(pumpkin.sprite);
+    this.pumpkins = []
+    const nuevasCalabazas = [];
+    const cantidadCalabazas = 150;
+    const distanciaMinima = 64;
+    const maxIntentos = 50;
+
+    const mapaWidth = 2500;
+    const mapaHeight = 1500;
+
+
+    for (let i = 0; i < cantidadCalabazas; i++) {
+      let intentos = 0;
+      let x, y;
+      let posicionValida = false;
+
+      while (intentos < maxIntentos && !posicionValida) {
+        x = Math.random() * mapaWidth;
+        y = Math.random() * mapaHeight;
+        posicionValida = true;
+
+        console.log("MapaWidth:", mapaWidth, "MapaHeight:", mapaHeight);
+
+        for (const otra of nuevasCalabazas) {
+          const dx = otra.sprite.x - x;
+          const dy = otra.sprite.y - y;
+          const distancia = Math.sqrt(dx * dx + dy * dy);
+          if (distancia < distanciaMinima) {
+            posicionValida = false;
+            break;
+          }
+        }
+
+        intentos++;
+      }
+
+      if (posicionValida) {
+        const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
+        pumpkin.sprite.x = x;
+        pumpkin.sprite.y = y;
+        nuevasCalabazas.push(pumpkin);
+        this.pumpkins.push(pumpkin);
+        this.camara.addChild(pumpkin.sprite);
+      } else {
+        console.warn(`No se pudo ubicar calabaza #${i} sin superposición.`);
+      }
     }
+    /*     this.pumpkins = [];
+    
+        for (let i = 0; i < 120; i++) {
+          //const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this.heartTextures.red);
+          const pumpkin = new Pumpkin(this.app, this.pumpkinTexture, this);
+          this.pumpkins.push(pumpkin);
+          this.camara.addChild(pumpkin.sprite);
+        } */
+
+
+
+
     /*-------------------- INTERACCIÓN DEL JUGEADOR -------------------- */
     this.app.stage.interactive = true;
     this.app.view.addEventListener('contextmenu', e => e.preventDefault());
