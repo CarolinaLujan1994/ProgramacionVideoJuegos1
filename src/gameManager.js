@@ -56,6 +56,8 @@ export class GameManager {
       const mapaWidth = 2500;
       const mapaHeight = 1500;
 
+      /* -------------------- FONDO -------------------- */
+
       const fondoTexture = resources.fondo.texture;
       this.fondo = new PIXI.TilingSprite(
         fondoTexture,
@@ -65,11 +67,8 @@ export class GameManager {
       this.fondo.tileScale.set(1);
       this.fondo.tilePosition.set(0, 0);
       this.fondo.position.set(0, 0)
-
-      /* -------------------- FONDO -------------------- */
-
       // fondo agregado
-      this.camara.addChildAt(this.fondo, 0);
+      this.app.stage.addChildAt(this.fondo, 0);
 
       /* -------------------- ZOOM -------------------- */
 
@@ -392,7 +391,7 @@ export class GameManager {
           localStorage.setItem("audioMuted", JSON.stringify(nuevoVolumen === 0));
           this.botonMute.texture = nuevoVolumen === 0 ? texturaOff : texturaOn;
 
-          console.log(nuevoVolumen === 0);
+          //console.log(nuevoVolumen === 0);
         }
       });
     }
@@ -487,8 +486,6 @@ export class GameManager {
         x = Math.random() * mapaWidth;
         y = Math.random() * mapaHeight;
         posicionValida = true;
-
-        console.log("MapaWidth:", mapaWidth, "MapaHeight:", mapaHeight);
 
         for (const otra of nuevasCalabazas) {
           const dx = otra.sprite.x - x;
