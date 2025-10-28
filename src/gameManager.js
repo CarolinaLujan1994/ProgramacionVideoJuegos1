@@ -273,13 +273,17 @@ export class GameManager {
                 fontSize: 50,
                 fill: '#000000ff',
                 stroke: '#bf36e9ff',
-                strokeThickness: 4
+                strokeThickness: 4,
+                lineHeight: 40,
+                align: 'center'
+
               });
               textoPausa.anchor.set(0.5);
               textoPausa.x = this.app.renderer.width / 2;
               textoPausa.y = this.app.renderer.height * 0.3;
               this.app.stage.addChild(textoPausa);
             }
+
             textoPausa.visible = true;
             this.app.renderer.render(this.app.stage);
             this.app.stop();
@@ -512,10 +516,49 @@ export class GameManager {
       }
     }
 
+    /*-------------------- BOTÓN DE INFORMACIÓN DEL ESTADO DE JUEGO "I" -------------------- */
 
+    // Panel de estado del juego (tecla I)
+    this.panelEstado = new PIXI.Container();
+    this.panelEstado.visible = false;
+
+    // fondo oscuro estilo pixelart
+    const overlayEstado = new PIXI.Graphics();
+    overlayEstado.beginFill(0x0f0f0f, 0.8);
+    overlayEstado.drawRect(0, 0, this.app.renderer.width, this.app.renderer.height);
+    overlayEstado.endFill();
+    this.panelEstado.addChild(overlayEstado);
+
+    // texto estilo retro
+    this.textoEstado = new PIXI.Text('', {
+      fontFamily: 'Press Start 2P',
+      fontSize: 26,
+      fill: '#000000ff',
+      stroke: '#bf36e9ff',
+      strokeThickness: 4,
+      lineHeight: 40,
+      align: 'center'
+    });
+    this.textoEstado.anchor.set(0.5);
+    this.textoEstado.x = this.app.renderer.width / 2;
+    this.textoEstado.y = this.app.renderer.height / 2;
+    this.panelEstado.addChild(this.textoEstado);
+
+    this.app.stage.addChild(this.panelEstado);
+
+    // toggle con tecla I
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'i') {
+        this.panelEstado.visible = !this.panelEstado.visible;
+        if (this.panelEstado.visible) {
+          this.actualizarPanelEstado();
+        }
+      }
+    });
 
 
     /*-------------------- INTERACCIÓN DEL JUGEADOR -------------------- */
+
     this.app.stage.interactive = true;
     this.app.view.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -790,6 +833,14 @@ export class GameManager {
       /* -------------------- PROYECTILES -------------------- */
 
       this.proyectiles = this.proyectiles.filter(p => p.update());
+
+      /* -------------------- ESTADO DE JUEGO -------------------- */
+
+      this.guardarEstadoJuego();
+
+      if (this.panelEstado?.visible) {
+        this.actualizarPanelEstado();
+      }
 
       /* -------------------- ESQUELETOS QUE APARECEN CUANDO QUEDAN 10 FANTASMAS -------------------- */
 
@@ -1380,6 +1431,50 @@ export class GameManager {
       ticker.start();
     };
     mostrarSiguiente(); // inicia la secuencia
+  }
+
+  /* -------------------- ESTADO DEL JUEGO -------------------- */
+
+  actualizarPanelEstado() {
+    const estadoGuardado = JSON.parse(localStorage.getItem('estadoJuego')) ?? null;
+
+    if (!estadoGuardado) {
+      this.textoEstado.text = 'NO HAY ESTADO GUARDADO';
+      return;
+    }
+
+    const corazones = estadoGuardado.corazones;
+    const traducciones = {
+      red: 'Rojo ígneo',
+      blue: 'Azul místico',
+      green: 'Verde esmeralda',
+      yellow: 'Amarillo solar',
+      pink: 'Rosa encantado'
+    };
+
+    const pociones = Object.entries(estadoGuardado.pociones)
+      .map(([color, cantidad]) => {
+        const nombreEsp = traducciones[color] ?? color;
+        return `${nombreEsp.toUpperCase()}: ${cantidad}`;
+      })
+      .join('\n');
+
+    const fantasmas = estadoGuardado.fantasmasRestantes;
+
+    this.textoEstado.text = `ESTADO DEL JUEGO\n\nCORAZONES: ${corazones}\n\n${pociones}\n\nFANTASMAS RESTANTES: ${fantasmas}`;
+  }
+
+  guardarEstadoJuego() {
+    const estado = {
+      corazones: this.heartBar.getCantidad(),
+      pociones: this.colores.reduce((acc, color) => {
+        acc[color] = this.pociones.filter(p => p.color === color && !p.visible).length;
+        return acc;
+      }, {}),
+      fantasmasRestantes: this.fantasmas.filter(f => f.hp > 0).length
+    };
+
+    localStorage.setItem('estadoJuego', JSON.stringify(estado));
   }
 
   /* -------------------- MÚSICA Y EFECTOS DE SONIDO -------------------- */
