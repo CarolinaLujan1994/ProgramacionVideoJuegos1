@@ -860,6 +860,9 @@ export class GameManager {
       this.pociones.forEach(p => {
         if (p.visible && p.collidesWith(this.wizard)) {
           const pudoAgregar = this.pocionHUD.agregarPocion(p.color);
+
+
+
           if (pudoAgregar && !this.pocionActiva) {
             this.pocionActiva = { color: p.color, cargas: 5 };
             p.hide();
@@ -869,6 +872,7 @@ export class GameManager {
             p.hide();
           }
           PIXI.sound.play('pickUpPotion', { volume: 0.2 })
+          this.guardarEstadoJuego()
         }
       });
     };
@@ -1436,14 +1440,8 @@ export class GameManager {
   /* -------------------- ESTADO DEL JUEGO -------------------- */
 
   actualizarPanelEstado() {
-    const estadoGuardado = JSON.parse(localStorage.getItem('estadoJuego')) ?? null;
+    const corazones = this.heartBar.getCantidad();
 
-    if (!estadoGuardado) {
-      this.textoEstado.text = 'NO HAY ESTADO GUARDADO';
-      return;
-    }
-
-    const corazones = estadoGuardado.corazones;
     const traducciones = {
       red: 'Rojo ígneo',
       blue: 'Azul místico',
@@ -1452,14 +1450,16 @@ export class GameManager {
       pink: 'Rosa encantado'
     };
 
-    const pociones = Object.entries(estadoGuardado.pociones)
+    const conteoHUD = this.pocionHUD.getConteoPorColor();
+
+    const pociones = Object.entries(conteoHUD)
       .map(([color, cantidad]) => {
         const nombreEsp = traducciones[color] ?? color;
         return `${nombreEsp.toUpperCase()}: ${cantidad}`;
       })
       .join('\n');
 
-    const fantasmas = estadoGuardado.fantasmasRestantes;
+    const fantasmas = this.fantasmas.filter(f => f.hp > 0).length;
 
     this.textoEstado.text = `ESTADO DEL JUEGO\n\nCORAZONES: ${corazones}\n\n${pociones}\n\nFANTASMAS RESTANTES: ${fantasmas}`;
   }
@@ -1468,7 +1468,7 @@ export class GameManager {
     const estado = {
       corazones: this.heartBar.getCantidad(),
       pociones: this.colores.reduce((acc, color) => {
-        acc[color] = this.pociones.filter(p => p.color === color && !p.visible).length;
+        acc[color] = this.pociones.filter(p => p.color === color && p.visible).length;
         return acc;
       }, {}),
       fantasmasRestantes: this.fantasmas.filter(f => f.hp > 0).length

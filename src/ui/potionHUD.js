@@ -5,6 +5,13 @@ export class PocionHUD {
     this.pociones = [];
     this.container = new PIXI.Container();
 
+    this.pocionesRed = [];
+    this.pocionesBlue = [];
+    this.pocionesGreen = [];
+    this.pocionesYellow = [];
+    this.pocionesPink = [];
+
+
     // configuración visual de las pociones
     this.TOTAL = 5;
     this.ESPACIO = 6;
@@ -54,5 +61,17 @@ export class PocionHUD {
 
       this.container.addChild(sprite);
     }
+  }
+  getConteoPorColor() {
+    const conteo = { red: 0, blue: 0, green: 0, yellow: 0, pink: 0 };
+    if (!this.pociones) return conteo;
+
+    this.pociones.forEach(p => {
+      if (p.color && conteo[p.color] !== undefined) {
+        conteo[p.color]++;
+      }
+    });
+
+    return conteo;
   }
 }
