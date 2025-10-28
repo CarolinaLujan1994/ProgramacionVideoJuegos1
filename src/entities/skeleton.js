@@ -1,9 +1,11 @@
 export class Skeleton {
-  constructor(app, textures, camara, wizard) {
+  constructor(app, textures, camara, wizard, skeletons) {
     this.app = app;
     this.textures = textures;
     this.camara = camara;
     this.wizard = wizard;
+    this.skeletons = skeletons;
+
 
     this.hp = 3;
     this.maxHp = 3;
@@ -74,8 +76,30 @@ perseguirMago() {
   const dist = Math.sqrt(dx * dx + dy * dy);
 
   if (dist > 0.5) {
-    this._x += (dx / dist) * this.speed;
-    this._y += (dy / dist) * this.speed;
+    const nextX = this._x + (dx / dist) * this.speed;
+    const nextY = this._y + (dy / dist) * this.speed;
+
+    // Verificar colisión con otros esqueletos
+    const radioColision = 24; // ajustado al tamaño real del sprite
+    let bloqueado = false;
+
+    for (const otro of this.skeletons) {
+      if (otro === this || otro.hp <= 0) continue;
+
+      const dX = otro.x - nextX;
+      const dY = otro.y - nextY;
+      const distancia = Math.sqrt(dX * dX + dY * dY);
+
+      if (distancia < radioColision) {
+        bloqueado = true;
+        break;
+      }
+    }
+
+    if (!bloqueado) {
+      this._x = nextX;
+      this._y = nextY;
+    }
 
     // direcciones
     let fila;

@@ -398,7 +398,7 @@ export class GameManager {
 
     /* ----- CONTADOR DE FANTASMAS ----- */
     this.totalFantasmas = 20;
-    this.fantasmasVivos = 20;
+    this.fantasmasVivos = 10;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -828,7 +828,7 @@ export class GameManager {
 
   spawnSkeletonGroup() {
     for (let i = 0; i < 5; i++) {
-      const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard);
+      const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard, this.skeletons);
       this.skeletons.push(skeleton);
     }
   }
