@@ -1,10 +1,11 @@
 export class Skeleton {
-  constructor(app, textures, camara, wizard, skeletons) {
+  constructor(app, textures, camara, wizard, skeletons, pumpkins) {
     this.app = app;
     this.textures = textures;
     this.camara = camara;
     this.wizard = wizard;
     this.skeletons = skeletons;
+    this.pumpkins = pumpkins
 
 
     this.hp = 3;
@@ -71,26 +72,54 @@ perseguirMago() {
   const targetX = this.wizard.x ?? this.wizard.sprite?.x;
   const targetY = this.wizard.y ?? this.wizard.sprite?.y;
 
-  const dx = targetX - this._x;
-  const dy = targetY - this._y;
+  let dx = targetX - this._x;
+  let dy = targetY - this._y;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
   if (dist > 0.5) {
-    const nextX = this._x + (dx / dist) * this.speed;
-    const nextY = this._y + (dy / dist) * this.speed;
+    // Normalizar dirección hacia el mago
+    dx /= dist;
+    dy /= dist;
 
-    // Verificar colisión con otros esqueletos
-    const radioColision = 24; // ajustado al tamaño real del sprite
+    // Desvío acumulativo por calabazas
+    let desvioX = 0;
+    let desvioY = 0;
+    const radioEvitar = 50;
+
+    for (const pumpkin of this.pumpkins ?? []) {
+      if (!pumpkin.visible) continue;
+
+      const px = pumpkin.sprite.x;
+      const py = pumpkin.sprite.y;
+      const dpx = this._x - px;
+      const dpy = this._y - py;
+      const distancia = Math.sqrt(dpx * dpx + dpy * dpy);
+
+      if (distancia < radioEvitar && distancia > 0.1) {
+        const fuerza = (radioEvitar - distancia) / radioEvitar;
+        desvioX += (dpx / distancia) * fuerza;
+        desvioY += (dpy / distancia) * fuerza;
+      }
+    }
+
+    // Combinar dirección hacia el mago con desvío
+    dx += desvioX;
+    dy += desvioY;
+
+    const nuevaDist = Math.sqrt(dx * dx + dy * dy);
+    const nextX = this._x + (dx / nuevaDist) * this.speed;
+    const nextY = this._y + (dy / nuevaDist) * this.speed;
+
+    // Colisión con otros esqueletos (bloqueo duro)
+    const radioColisionSkeleton = 24;
     let bloqueado = false;
 
     for (const otro of this.skeletons) {
       if (otro === this || otro.hp <= 0) continue;
-
       const dX = otro.x - nextX;
       const dY = otro.y - nextY;
       const distancia = Math.sqrt(dX * dX + dY * dY);
-
-      if (distancia < radioColision) {
+      if (distancia < radioColisionSkeleton) {
         bloqueado = true;
         break;
       }
@@ -101,12 +130,14 @@ perseguirMago() {
       this._y = nextY;
     }
 
-    // direcciones
+    // Dirección cardinal
+    const finalDx = targetX - this._x;
+    const finalDy = targetY - this._y;
     let fila;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      fila = dx > 0 ? 3 : 1; // derecha o izquierda
+    if (Math.abs(finalDx) > Math.abs(finalDy)) {
+      fila = finalDx > 0 ? 3 : 1;
     } else {
-      fila = dy > 0 ? 2 : 0; // sur o norte
+      fila = finalDy > 0 ? 2 : 0;
     }
 
     if (fila !== this.direccionActual) {
@@ -118,7 +149,7 @@ perseguirMago() {
       }
 
       this.sprite.textures = this.animacionesPorFila[fila];
-      this.sprite.animationSpeed = 0.5;
+      this.sprite.animationSpeed = 0.7;
       this.sprite.play();
       this.direccionActual = fila;
     }

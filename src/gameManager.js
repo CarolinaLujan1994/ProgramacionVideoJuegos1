@@ -828,7 +828,7 @@ export class GameManager {
 
   spawnSkeletonGroup() {
     for (let i = 0; i < 5; i++) {
-      const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard, this.skeletons);
+      const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard, this.skeletons, this.pumpkins);
       this.skeletons.push(skeleton);
     }
   }
