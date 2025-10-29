@@ -897,6 +897,7 @@ export class GameManager {
       const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard, this.skeletons, this.pumpkins);
       this.skeletons.push(skeleton);
     }
+    PIXI.sound.play('zombie', { volume: 0.2 });
   }
 
   /* -------------------- PANTALLA DE INICIO DEL JUEGO -------------------- */
@@ -1505,7 +1506,8 @@ export class GameManager {
       pressButton: 'src/assets/music-sfx/pressButton.mp3',
       victory: 'src/assets/music-sfx/victory.mp3',
       gameOver: 'src/assets/music-sfx/gameOver.mp3',
-      killingSkeleton: 'src/assets/music-sfx/killingSkeleton.mp3'
+      killingSkeleton: 'src/assets/music-sfx/killingSkeleton.mp3',
+      zombie: 'src/assets/music-sfx/zombie.mp3'
     });
 
     const muteGuardado = JSON.parse(localStorage.getItem("audioMuted"));
@@ -1514,30 +1516,4 @@ export class GameManager {
     this.musica.loop = true
     this.musica.play();
   }
-
-  /*   cargarEstadoJuego() {
-      const estado = JSON.parse(localStorage.getItem('estadoJuego'));
-      if (!estado) {
-        console.warn('No hay estado guardado');
-        return;
-      }
-  
-      // Restaurar corazones
-      if (this.heartBar && typeof this.heartBar.setCantidad === 'function') {
-        this.heartBar.setCantidad(estado.corazones);
-      }
-  
-      // Restaurar pociones en el HUD
-      if (this.pocionHUD && typeof this.pocionHUD.resetear === 'function') {
-        this.pocionHUD.resetear();
-      }
-  
-  
-      // Restaurar fantasmas vivos
-      this.fantasmasVivos = estado.fantasmasRestantes ?? this.totalFantasmas;
-  
-      // Actualizar panel de estado
-      this.actualizarPanelEstado();
-    } */
-
 }
