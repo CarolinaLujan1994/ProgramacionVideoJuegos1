@@ -240,8 +240,17 @@ export class GameManager {
         pivotY = Math.max(minPivotY, Math.min(pivotY, maxPivotY));
 
         // posición de cámara
-        this.camara.pivot.set(pivotX, pivotY);
+        /* this.camara.pivot.set(pivotX, pivotY);
+        this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2); */
+
+        // posición de cámara con lerp
+        const lerpFactor = 0.1; // cuanto más alto, más rápida la cámara (0.1 = suave)
+        this.camara.pivot.x += (pivotX - this.camara.pivot.x) * lerpFactor;
+        this.camara.pivot.y += (pivotY - this.camara.pivot.y) * lerpFactor;
+
+        // mantener centrada la cámara en pantalla
         this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2);
+
       });
 
       /* -------------------- ESQUELETOS QUE APARECEN CUANDO QUEDA MENOS DE 10 FANSTAMAS -------------------- */
@@ -1504,29 +1513,29 @@ export class GameManager {
     this.musica.play();
   }
 
-/*   cargarEstadoJuego() {
-    const estado = JSON.parse(localStorage.getItem('estadoJuego'));
-    if (!estado) {
-      console.warn('No hay estado guardado');
-      return;
-    }
-
-    // Restaurar corazones
-    if (this.heartBar && typeof this.heartBar.setCantidad === 'function') {
-      this.heartBar.setCantidad(estado.corazones);
-    }
-
-    // Restaurar pociones en el HUD
-    if (this.pocionHUD && typeof this.pocionHUD.resetear === 'function') {
-      this.pocionHUD.resetear();
-    }
-
-
-    // Restaurar fantasmas vivos
-    this.fantasmasVivos = estado.fantasmasRestantes ?? this.totalFantasmas;
-
-    // Actualizar panel de estado
-    this.actualizarPanelEstado();
-  } */
+  /*   cargarEstadoJuego() {
+      const estado = JSON.parse(localStorage.getItem('estadoJuego'));
+      if (!estado) {
+        console.warn('No hay estado guardado');
+        return;
+      }
+  
+      // Restaurar corazones
+      if (this.heartBar && typeof this.heartBar.setCantidad === 'function') {
+        this.heartBar.setCantidad(estado.corazones);
+      }
+  
+      // Restaurar pociones en el HUD
+      if (this.pocionHUD && typeof this.pocionHUD.resetear === 'function') {
+        this.pocionHUD.resetear();
+      }
+  
+  
+      // Restaurar fantasmas vivos
+      this.fantasmasVivos = estado.fantasmasRestantes ?? this.totalFantasmas;
+  
+      // Actualizar panel de estado
+      this.actualizarPanelEstado();
+    } */
 
 }
