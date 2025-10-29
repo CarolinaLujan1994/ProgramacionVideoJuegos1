@@ -990,7 +990,7 @@ export class GameManager {
 
     // texto
     const creditos = new PIXI.Text(
-      'Desarrollado por Carolina Luján\nProgramación de Videojuegos I\nUniversidad Nacional de Hurlingham\nSegundo cuatrimestre 2025',
+      'Desarrollado por Carolina Luján\n\nProgramación de Videojuegos I\n\nUniversidad Nacional de Hurlingham\n\nSegundo cuatrimestre 2025',
       {
         fontFamily: 'Press Start 2P',
         fontSize: 25,
@@ -1038,7 +1038,7 @@ export class GameManager {
 
     // texto
     const creditos = new PIXI.Text(
-      'Clic izquierdo -> mover\nClic derecho -> disparar\n"P" -> pausa\n"M" -> silenciar música',
+      'Clic izquierdo -> Mover\n\nClic derecho -> Disparar\n\n"P" -> Pausa\n\n"M" -> Silenciar música\n\n"I" -> Estado de juego',
       {
         fontFamily: 'Press Start 2P',
         fontSize: 25,
@@ -1248,6 +1248,7 @@ export class GameManager {
     this.totalFantasmas = 20;
     this.fantasmasVivos = 20;
     this.gameOverMostrado = false;
+    this.hudContainer = null
 
     // agregar fondo
     if (this.fondo) this.camara.addChildAt(this.fondo, 0);
@@ -1256,6 +1257,7 @@ export class GameManager {
     if (!this.app.stage.children.includes(this.camara)) {
       this.app.stage.addChild(this.camara);
     }
+
     if (this.hudContainer && !this.app.stage.children.includes(this.hudContainer)) {
       this.app.stage.addChild(this.hudContainer);
     }
@@ -1501,4 +1503,30 @@ export class GameManager {
     this.musica.loop = true
     this.musica.play();
   }
+
+/*   cargarEstadoJuego() {
+    const estado = JSON.parse(localStorage.getItem('estadoJuego'));
+    if (!estado) {
+      console.warn('No hay estado guardado');
+      return;
+    }
+
+    // Restaurar corazones
+    if (this.heartBar && typeof this.heartBar.setCantidad === 'function') {
+      this.heartBar.setCantidad(estado.corazones);
+    }
+
+    // Restaurar pociones en el HUD
+    if (this.pocionHUD && typeof this.pocionHUD.resetear === 'function') {
+      this.pocionHUD.resetear();
+    }
+
+
+    // Restaurar fantasmas vivos
+    this.fantasmasVivos = estado.fantasmasRestantes ?? this.totalFantasmas;
+
+    // Actualizar panel de estado
+    this.actualizarPanelEstado();
+  } */
+
 }
