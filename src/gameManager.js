@@ -32,6 +32,8 @@ export class GameManager {
     this.skeletons = [];
     this.skeletonsActivated = false;
     this.skeletonTextures = null;
+    this.skeletonsFirstGroup = false;
+    this.skeletonsSecondGroup = false;
 
     /* -------------------- LOADER -------------------- */
 
@@ -253,14 +255,8 @@ export class GameManager {
 
       });
 
-      /* -------------------- ESQUELETOS QUE APARECEN CUANDO QUEDA MENOS DE 10 FANSTAMAS -------------------- */
-      // esquelos que aparecen cuando quedan 10 fantmas
-      const fantasmasVivos = this.ghosts?.filter(g => g.hp > 0).length || 0;
+      /* -------------------- ACTUALIZAR ESQUELETOS -------------------- */
 
-      if (fantasmasVivos <= 10 && !this.skeletonsActivated) {
-        this.skeletonsActivated = true;
-        this.spawnSkeletonGroup(); // genera los primeros 5
-      }
       // actualizacion de esqueletos
       this.skeletons.forEach(skeleton => skeleton.update());
 
@@ -411,7 +407,7 @@ export class GameManager {
 
     /* ----- CONTADOR DE FANTASMAS ----- */
     this.totalFantasmas = 20;
-    this.fantasmasVivos = 10;
+    this.fantasmasVivos = 6;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -853,14 +849,20 @@ export class GameManager {
 
       /* -------------------- ESQUELETOS QUE APARECEN CUANDO QUEDAN 10 FANTASMAS -------------------- */
 
-      // los esqueletos aparecen cuando quedan 10 fantasmas
-      if (this.fantasmasVivos <= 10) {
-        if (!this.skeletonsActivated) {
-          this.skeletonsActivated = true;
-          this.spawnSkeletonGroup();
-        }
-      } else {
-        this.skeletonsActivated = false; // permite reaparecer esqueletos otra vez
+      if (this.fantasmasVivos <= 10 && !this.skeletonsFirstGroup) {
+        this.skeletonsFirstGroup = true;
+        this.spawnSkeletonGroup(5); // 5 esqueletos
+      }
+
+      if (this.fantasmasVivos <= 5 && !this.skeletonsSecondGroup) {
+        this.skeletonsSecondGroup = true;
+        this.spawnSkeletonGroup(10); // 10 esqueletos
+      }
+
+      // Resetear flags si los fantasmas vuelven a subir (opcional)
+      if (this.fantasmasVivos > 10) {
+        this.skeletonsFirstGroup = false;
+        this.skeletonsSecondGroup = false;
       }
 
       /* -------------------- COLISIÓN CON POCIONES -------------------- */
@@ -890,8 +892,8 @@ export class GameManager {
 
   /* -------------------- FUNCIÓN PARA REAPARECER ESQUELETOS -------------------- */
 
-  spawnSkeletonGroup() {
-    for (let i = 0; i < 5; i++) {
+  spawnSkeletonGroup(cantidad = 5) {
+    for (let i = 0; i < cantidad; i++) {
       const skeleton = new Skeleton(this.app, this.skeletonTextures, this.camara, this.wizard, this.skeletons, this.pumpkins);
       this.skeletons.push(skeleton);
     }
