@@ -407,7 +407,7 @@ export class GameManager {
 
     /* ----- CONTADOR DE FANTASMAS ----- */
     this.totalFantasmas = 20;
-    this.fantasmasVivos = 6;
+    this.fantasmasVivos = 20;
 
     this.contadorFantasmas = new PIXI.Text(`${this.fantasmasVivos}/${this.totalFantasmas}`, {
       fontFamily: 'Press Start 2P',
@@ -859,12 +859,6 @@ export class GameManager {
         this.spawnSkeletonGroup(10); // 10 esqueletos
       }
 
-      // Resetear flags si los fantasmas vuelven a subir (opcional)
-      if (this.fantasmasVivos > 10) {
-        this.skeletonsFirstGroup = false;
-        this.skeletonsSecondGroup = false;
-      }
-
       /* -------------------- COLISIÓN CON POCIONES -------------------- */
 
       // pociones
@@ -1098,11 +1092,11 @@ export class GameManager {
 
 
     const textos = [
-      '...'
-      /* 'En un bosque encantado,',
+      /* '...' */
+      'En un bosque encantado,',
       'un mago anciano despierta de su gran letargo.',
       'Criaturas lo acechan...',
-      'pero hay esperanza en cada poción recolectada.' */
+      'pero hay esperanza en cada poción recolectada.'
     ];
 
     let index = 0;

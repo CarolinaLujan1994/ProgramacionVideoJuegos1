@@ -77,11 +77,11 @@ perseguirMago() {
   const dist = Math.sqrt(dx * dx + dy * dy);
 
   if (dist > 0.5) {
-    // Normalizar dirección hacia el mago
+    // normalizar dirección hacia el mago
     dx /= dist;
     dy /= dist;
 
-    // Desvío acumulativo por calabazas
+    // desvío acumulativo por calabazas
     let desvioX = 0;
     let desvioY = 0;
     const radioEvitar = 50;
@@ -102,7 +102,7 @@ perseguirMago() {
       }
     }
 
-    // Combinar dirección hacia el mago con desvío
+    // combinar dirección hacia el mago con desvío
     dx += desvioX;
     dy += desvioY;
 
@@ -110,7 +110,7 @@ perseguirMago() {
     const nextX = this._x + (dx / nuevaDist) * this.speed;
     const nextY = this._y + (dy / nuevaDist) * this.speed;
 
-    // Colisión con otros esqueletos (bloqueo duro)
+    // colisión con otros esqueletos
     const radioColisionSkeleton = 24;
     let bloqueado = false;
 
