@@ -9,8 +9,6 @@ import { PocionProyectil } from './entities/projectilePotion.js';
 import { Pumpkin } from './entities/pumpkin.js';
 import { Skeleton } from './entities/skeleton.js';
 
-const PIXI = window.PIXI;
-
 export class GameManager {
   constructor() {
     this.app = new PIXI.Application({
@@ -19,6 +17,11 @@ export class GameManager {
     document.body.appendChild(this.app.view);
 
     this.victoriaMostrada = false;
+
+    // zoom para arreglar con la camara lerp
+    this.camaraZoomInstantaneo = false;
+    this.escalaAnterior = 1;
+
 
     /* -------------------- CAMARA -------------------- */
 
@@ -241,14 +244,27 @@ export class GameManager {
         pivotX = Math.max(minPivotX, Math.min(pivotX, maxPivotX));
         pivotY = Math.max(minPivotY, Math.min(pivotY, maxPivotY));
 
-        // posición de cámara
-        /* this.camara.pivot.set(pivotX, pivotY);
-        this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2); */
-
         // posición de cámara con lerp
-        const lerpFactor = 0.1; // cuanto más alto, más rápida la cámara (0.1 = suave)
-        this.camara.pivot.x += (pivotX - this.camara.pivot.x) * lerpFactor;
-        this.camara.pivot.y += (pivotY - this.camara.pivot.y) * lerpFactor;
+        const lerpFactor = 0.1;
+
+        // si el zoom cambia (scale distinta), mueve la cámara instantáneo
+        if (this.camara.scale.x !== this.escalaAnterior) {
+          this.camara.pivot.set(pivotX, pivotY);
+          this.escalaAnterior = this.camara.scale.x;
+          this.camaraZoomInstantaneo = false; // limpiar flag por si estaba activo
+        }
+
+        // si hubo zoom con la rueda entonces frame se vuelve instantáneo
+        else if (this.camaraZoomInstantaneo) {
+          this.camara.pivot.set(pivotX, pivotY);
+          this.camaraZoomInstantaneo = false;
+        }
+
+        // si no cambió zoom → lerp normal
+        else {
+          this.camara.pivot.x += (pivotX - this.camara.pivot.x) * lerpFactor;
+          this.camara.pivot.y += (pivotY - this.camara.pivot.y) * lerpFactor;
+        }
 
         // mantener centrada la cámara en pantalla
         this.camara.position.set(this.app.renderer.width / 2, this.app.renderer.height / 2);
