@@ -4,4 +4,6 @@ window.onload = () => {
   const game = new GameManager();
   game.cargarSonidos();
   game.mostrarPantallaInicio();
+
+  window.juego = game;
 };
