@@ -1092,11 +1092,11 @@ export class GameManager {
 
 
     const textos = [
-      /* '...' */
-      'En un bosque encantado,',
+      '...'
+      /* 'En un bosque encantado,',
       'un mago anciano despierta de su gran letargo.',
       'Criaturas lo acechan...',
-      'pero hay esperanza en cada poción recolectada.'
+      'pero hay esperanza en cada poción recolectada.' */
     ];
 
     let index = 0;

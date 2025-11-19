@@ -11,6 +11,13 @@ export class Wizard extends PIXI.Container {
     this.velocidad = 3;
     this.invulnerable = false;
 
+    // aceleración / desaceleración
+    this.velocidad = 3;
+    this.velocidadActual = 0;
+    this.aceleracion = 0.2;
+    this.desaceleracion = 0.3;
+
+
     // sprite animado
     this.sprite = new PIXI.AnimatedSprite(this.texturesByStateAndDirection.idle.front);
     this.sprite.animationSpeed = 0.1;
@@ -31,7 +38,7 @@ export class Wizard extends PIXI.Container {
     this.x = 512;
     this.y = 390;
 
-    this.app.stage.addChild(this);
+    //this.app.stage.addChild(this);
   }
 
   setState(newState) {
@@ -100,20 +107,44 @@ export class Wizard extends PIXI.Container {
       const dy = this.destino.y - this.y;
       const distancia = Math.sqrt(dx * dx + dy * dy);
 
-      if (distancia > this.velocidad) {
-        this.x += (dx / distancia) * this.velocidad;
-        this.y += (dy / distancia) * this.velocidad;
+      // distancia donde empieza a desaceleración
+      const zonaFrenado = 25; 
+
+      // --- ACELERAR ---
+      if (distancia > zonaFrenado) {
+        // acelera a velocidad máxima
+        if (this.velocidadActual < this.velocidad) {
+          this.velocidadActual += this.aceleracion;
+        }
+      }
+      // --- DESACELERAR ---
+      else {
+        // va frenando
+        if (this.velocidadActual > 0.5) {
+          this.velocidadActual -= this.desaceleracion;
+        }
+      }
+
+      // se mueve según velocidadActual
+      if (distancia > this.velocidadActual) {
+        this.x += (dx / distancia) * this.velocidadActual;
+        this.y += (dy / distancia) * this.velocidadActual;
       } else {
+        // llegó
         this.x = this.destino.x;
         this.y = this.destino.y;
         this.destino = null;
+        this.velocidadActual = 0; // reset
         this.setState('idle');
       }
     }
 
+    // aura 
     this.aura.x = 0;
     this.aura.y = 0;
   }
+
+
 
   // aura como círculo
   activarAura(color = '#00ffff') {
@@ -128,7 +159,7 @@ export class Wizard extends PIXI.Container {
     this.aura.visible = false;
   }
 
- 
+
   recibirDanio(callback) {
     this.sprite.tint = 0xff0000;
     setTimeout(() => {
